@@ -12,9 +12,10 @@ out/
 
 # Tests
 coverage/
-playwright-report/
-test-results/
-blob-report/
+
+# Next.js-generated agent guidance is not part of the product repository
+AGENTS.md
+CLAUDE.md
 
 # Deployment and local tooling
 .vercel/
