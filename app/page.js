@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AppShell } from "../components/app-shell";
 
 export default function HomePage() {
@@ -22,6 +24,14 @@ export default function HomePage() {
           <div className="mt-10 inline-flex items-center gap-3 rounded-full border border-line bg-surface px-4 py-2 font-mono text-xs text-subtle shadow-sm">
             <span className="h-2 w-2 rounded-full bg-ready" aria-hidden="true" />
             Next.js foundation is running
+          </div>
+          <div className="mt-8">
+            <Link
+              className="inline-flex rounded-lg bg-foreground px-5 py-3 text-sm font-semibold text-background"
+              href="/setup/github"
+            >
+              Connect GitHub repositories →
+            </Link>
           </div>
         </div>
       </section>
