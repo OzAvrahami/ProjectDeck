@@ -1,0 +1,117 @@
+# MVP scope
+
+The MVP establishes ProjectDeck as a useful command center before adding broad automation. It defines product behavior, not an implementation architecture.
+
+## Portfolio / Overview
+
+The Overview is the home screen. It should show the portfolio as a prominent responsive grid of project cards, supported by a compact portfolio summary and a “Continue where you left off” entry point.
+
+Each project card should communicate, where applicable:
+
+- project identity and project-specific accent;
+- lifecycle state and short description;
+- current version or milestone;
+- next planned action;
+- open issue count;
+- component count or summary;
+- latest meaningful work;
+- last-worked or last-updated information.
+
+Cards should remain easy to scan. Missing optional data should not produce empty metadata rows or warning clutter.
+
+“Continue where you left off” primarily returns the user to the most recently used or worked ProjectDeck project context. It is not an AI-generated portfolio recommendation and must not imply that ProjectDeck has selected the user's highest-priority project. Smarter relevance selection may be considered later.
+
+## Projects
+
+The Projects view provides the complete project list with:
+
+- text search;
+- lifecycle-state filtering;
+- clear access to each Project Workspace.
+
+It is a navigation and portfolio-management surface, not a spreadsheet-style project administration screen.
+
+## Project Workspace
+
+Each project has a dedicated workspace with these tabs:
+
+- Overview
+- Issues
+- Releases
+- Activity
+- Docs
+
+The project Overview contains:
+
+- **Where we are:** a concise human-readable description of current state;
+- **Next up:** the user's planned next action;
+- **Needs attention:** a short list of items that may require intervention;
+- **Recent work:** meaningful outcomes and changes;
+- **Components:** the product's repositories, applications, services, or other major parts;
+- **Latest release:** the most relevant release information;
+- **Issues:** open issue count with a route to details;
+- **Quick links:** important repositories, deployments, documents, and other resources.
+
+The other tabs provide focused access to their subject without reproducing the full experience of the source system.
+
+## Cross-project views
+
+Global views provide selective portfolio-wide visibility:
+
+- **Activity:** meaningful recent work across projects;
+- **Releases:** recent and relevant releases;
+- **Issues:** important open issues and items needing attention.
+
+These views should be useful summaries with direct routes to the relevant Project Workspace or source. They should not become unfiltered event feeds or duplicate issue-management tools.
+
+## Project and resource model
+
+The MVP must be able to represent these product concepts without prescribing database tables:
+
+- **Project:** the primary portfolio object;
+- **Component:** a meaningful part of a Project, such as an application, service, site, or library;
+- **Repository/resource association:** a repository or external resource related to a Project or Component;
+- **Deployment/runtime resource:** a deployed environment or service whose current state may differ from repository or release state;
+- **Documentation resource:** a document or documentation destination;
+- **Lifecycle state:** the project's current lifecycle description: Planning, Active, Stable, Paused, Completed, or Archived;
+- **Attention condition:** whether something currently Needs Attention, independent of lifecycle state—a project may be Active and also Need Attention;
+- **Next action:** the explicit action the user intends to advance next.
+
+A resource may support more than one component where that reflects reality. Project-level orientation remains primary even when details come from several resources.
+
+## Themes and responsive behavior
+
+The MVP supports:
+
+- dark and light themes;
+- a user-controlled theme toggle;
+- sensible use of the operating-system preference;
+- desktop-first layouts that adapt cleanly to laptop and tablet widths.
+
+Mobile should remain usable for orientation, but mobile-first workflows and a broad theme system are outside this MVP.
+
+## Trust and freshness minimum
+
+Trustworthy behavior should be simple and mostly unobtrusive:
+
+- show “last checked” or “last known” information where recency could affect interpretation;
+- identify an unavailable source close to the affected information;
+- preserve usable cached or manually entered context while a source refreshes or fails;
+- never fabricate local workspace state;
+- never treat activity volume as meaningful progress without a clear basis;
+- never overwrite the user's next action with an automated suggestion.
+
+Detailed provenance, source-authority rules, confidence scoring, and semantic claim machinery are not required for the MVP.
+
+## Explicit MVP exclusions
+
+- an automated local-machine observer or agent;
+- broad AI-conversation ingestion;
+- a generalized semantic claim engine;
+- autonomous cross-project prioritization;
+- dozens of integrations;
+- a duplicate task- or issue-management system;
+- generalized integration-governance administration;
+- enterprise collaboration, permissions, reporting, or commercial features unless later validated;
+- a notification-driven engagement system;
+- a power-user command system beyond sensible accessibility and keyboard navigation.

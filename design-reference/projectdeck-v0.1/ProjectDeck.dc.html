@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Space+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+* { box-sizing: border-box; }
+::selection { background: var(--selection-bg, oklch(72% 0.14 258 / 0.3)); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--focus-ring, oklch(72% 0.14 258)); outline-offset: 1px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:{{ pal.bg }};color:{{ pal.text }};font-family:'Sora',-apple-system,sans-serif;--focus-ring:{{ pal.focusRing }};--selection-bg:{{ pal.selectionBg }};">
+
+  <header style="position:sticky;top:0;z-index:10;background:{{ pal.headerBg }};border-bottom:1px solid {{ pal.headerBorder }};display:flex;align-items:center;justify-content:space-between;{{ headerOuterStyle }}">
+    <div style="display:flex;align-items:center;{{ headerLeftGapStyle }}">
+      <div style="font-weight:700;font-size:15px;letter-spacing:-0.01em;">ProjectDeck</div>
+      <sc-if value="{{ isWorkspace }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;">
+          <button onClick="{{ backToProjects }}" style="background:none;border:none;padding:0;color:{{ pal.text65 }};font-size:14px;font-family:inherit;cursor:pointer;">← All projects</button>
+          <span style="opacity:0.4;">/</span>
+          <span style="font-weight:600;">{{ workspaceName }}</span>
+        </div>
+      </sc-if>
+      <div style="display:flex;gap:6px;{{ navRowStyle }}">
+        <button onClick="{{ goOverview }}" style="{{ overviewNavStyle }}" style-hover="{{ navHoverStyle }}">Overview</button>
+        <button onClick="{{ goProjects }}" style="{{ projectsNavStyle }}" style-hover="{{ navHoverStyle }}">Projects</button>
+        <button onClick="{{ goActivity }}" style="{{ activityNavStyle }}" style-hover="{{ navHoverStyle }}">Activity</button>
+        <button onClick="{{ goReleases }}" style="{{ releasesNavStyle }}" style-hover="{{ navHoverStyle }}">Releases</button>
+        <button onClick="{{ goIssues }}" style="{{ issuesNavStyle }}" style-hover="{{ navHoverStyle }}">Issues</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <button onClick="{{ toggleTheme }}" aria-label="{{ themeToggleLabel }}" title="{{ themeToggleLabel }}" style="{{ themeToggleStyle }}" style-hover="{{ themeToggleHoverStyle }}">
+        <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </sc-if>
+        <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+        </sc-if>
+      </button>
+      <div style="width:32px;height:32px;border-radius:50%;background:{{ pal.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:{{ pal.text85 }};flex-shrink:0;">O</div>
+    </div>
+  </header>
+
+  <main style="max-width:1160px;margin:0 auto;padding:48px 32px 96px;">
+
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font-size:28px;font-weight:600;margin:0 0 8px;">Good evening, Oz</h1>
+        <p style="font-family:'Space Mono',monospace;font-size:13px;color:{{ pal.text60 }};margin:0 0 32px;">{{ summaryLine }}</p>
+
+        <div style="display:flex;align-items:center;gap:22px;background:{{ pal.continueCardBg }};border:1px solid {{ continueCard.accentBorder }};border-radius:16px;padding:24px 28px;margin-bottom:40px;position:relative;overflow:hidden;box-shadow:{{ pal.cardShadow }};">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ continueCard.accentSolid }};"></div>
+          <div style="width:52px;height:52px;border-radius:12px;background:{{ continueCard.accentTint }};border:1px solid {{ continueCard.accentBorder }};color:{{ continueCard.accentSolid }};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;letter-spacing:-0.02em;flex-shrink:0;">{{ continueCard.monogram }}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};margin-bottom:8px;">Continue where you left off</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
+              <span style="font-size:18px;font-weight:600;">{{ continueCard.name }}</span>
+              <span style="font-size:13px;color:{{ pal.text55 }};">{{ continueCard.lastWork }}</span>
+            </div>
+            <p style="font-size:14.5px;color:{{ pal.text72 }};margin:0 0 4px;line-height:1.5;">{{ continueCard.lastWorkDesc }}.</p>
+            <p style="font-size:14.5px;color:{{ pal.text85 }};margin:0;line-height:1.5;">Next: {{ continueCard.next }}</p>
+          </div>
+          <button onClick="{{ continueCard.open }}" style="background:{{ continueCard.accentTint }};border:1px solid {{ continueCard.accentBorder }};color:{{ continueCard.accentSolid }};border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;padding:10px 18px;flex-shrink:0;">Continue →</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:18px;">
+          <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.open }}" style="position:relative;overflow:hidden;text-align:left;background:{{ pal.surfaceBg }};border:1px solid {{ pal.cardBorder }};border-radius:14px;padding:24px 22px 18px;cursor:pointer;font-family:inherit;color:inherit;display:flex;flex-direction:column;gap:14px;box-shadow:{{ pal.cardShadow }};transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;" style-hover="{{ c.hoverStyle }}">
+              <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ c.accentSolid }};"></div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div style="display:flex;gap:12px;align-items:center;min-width:0;">
+                  <div style="width:38px;height:38px;border-radius:10px;background:{{ c.accentTint }};border:1px solid {{ c.accentBorder }};color:{{ c.accentSolid }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:-0.02em;flex-shrink:0;">{{ c.monogram }}</div>
+                  <div style="min-width:0;">
+                    <div style="font-size:16px;font-weight:600;line-height:1.25;">{{ c.name }}</div>
+                    <div style="font-size:13px;color:{{ pal.text68 }};margin-top:2px;">{{ c.tagline }}</div>
+                  </div>
+                </div>
+                <div style="{{ c.statusWrapStyle }}">
+                  <div style="width:6px;height:6px;border-radius:50%;background:{{ c.statusDot }};flex-shrink:0;"></div>
+                  <span style="font-size:12px;color:{{ pal.text68 }};white-space:nowrap;">{{ c.statusLabel }}</span>
+                </div>
+              </div>
+
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+                  <span style="width:9px;height:2px;background:{{ c.accentSolid }};display:inline-block;"></span>
+                  <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};">Next</span>
+                </div>
+                <div style="font-size:15.5px;font-weight:600;line-height:1.4;">{{ c.next }} <span style="color:{{ c.accentSolid }};">→</span></div>
+              </div>
+
+              <div style="display:flex;gap:10px;align-items:center;font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text60 }};flex-wrap:wrap;">
+                <span>{{ c.versionLabel }}</span>
+                <span style="opacity:0.4;">·</span>
+                <span>{{ c.issuesLabel }}</span>
+                <span style="opacity:0.4;">·</span>
+                <span>{{ c.componentsLabel }}</span>
+              </div>
+
+              <div style="border-top:1px solid {{ pal.divider }};padding-top:12px;font-size:12.5px;color:{{ pal.text55 }};">{{ c.lastWorkLine }}</div>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="font-size:24px;font-weight:600;margin:0 0 24px;">Projects</h1>
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap;">
+          <input value="{{ search }}" onChange="{{ setSearch }}" placeholder="Search projects" style="background:{{ pal.surfaceBg }};border:1px solid {{ pal.cardBorder }};border-radius:8px;padding:10px 14px;color:inherit;font-family:inherit;font-size:14px;width:260px;" />
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <sc-for list="{{ statusFilters }}" as="f" hint-placeholder-count="6">
+              <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ hasFilteredCards }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:18px;">
+            <sc-for list="{{ filteredCards }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.open }}" style="position:relative;overflow:hidden;text-align:left;background:{{ pal.surfaceBg }};border:1px solid {{ pal.cardBorder }};border-radius:14px;padding:24px 22px 18px;cursor:pointer;font-family:inherit;color:inherit;display:flex;flex-direction:column;gap:14px;box-shadow:{{ pal.cardShadow }};transition:border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;" style-hover="{{ c.hoverStyle }}">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ c.accentSolid }};"></div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                  <div style="display:flex;gap:12px;align-items:center;min-width:0;">
+                    <div style="width:38px;height:38px;border-radius:10px;background:{{ c.accentTint }};border:1px solid {{ c.accentBorder }};color:{{ c.accentSolid }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:-0.02em;flex-shrink:0;">{{ c.monogram }}</div>
+                    <div style="min-width:0;">
+                      <div style="font-size:16px;font-weight:600;line-height:1.25;">{{ c.name }}</div>
+                      <div style="font-size:13px;color:{{ pal.text68 }};margin-top:2px;">{{ c.tagline }}</div>
+                    </div>
+                  </div>
+                  <div style="{{ c.statusWrapStyle }}">
+                    <div style="width:6px;height:6px;border-radius:50%;background:{{ c.statusDot }};flex-shrink:0;"></div>
+                    <span style="font-size:12px;color:{{ pal.text68 }};white-space:nowrap;">{{ c.statusLabel }}</span>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+                    <span style="width:9px;height:2px;background:{{ c.accentSolid }};display:inline-block;"></span>
+                    <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};">Next</span>
+                  </div>
+                  <div style="font-size:15.5px;font-weight:600;line-height:1.4;">{{ c.next }} <span style="color:{{ c.accentSolid }};">→</span></div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text60 }};flex-wrap:wrap;">
+                  <span>{{ c.versionLabel }}</span>
+                  <span style="opacity:0.4;">·</span>
+                  <span>{{ c.issuesLabel }}</span>
+                  <span style="opacity:0.4;">·</span>
+                  <span>{{ c.componentsLabel }}</span>
+                </div>
+                <div style="border-top:1px solid {{ pal.divider }};padding-top:12px;font-size:12.5px;color:{{ pal.text55 }};">{{ c.lastWorkLine }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasNoFilteredCards }}" hint-placeholder-val="{{ false }}">
+          <p style="color:{{ pal.text55 }};font-size:14px;">No projects match.</p>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:680px;">
+        <h1 style="font-size:24px;font-weight:600;margin:0 0 8px;">Activity</h1>
+        <p style="font-size:14px;color:{{ pal.text60 }};margin:0 0 28px;">Meaningful work across every project, most recent first.</p>
+        <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="8">
+          <button onClick="{{ a.open }}" style="width:100%;text-align:left;background:none;border:none;border-top:1px solid {{ pal.divider }};padding:16px 2px;cursor:pointer;font-family:inherit;color:inherit;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                <div style="width:6px;height:6px;border-radius:50%;background:{{ a.tagColor }};flex-shrink:0;"></div>
+                <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:{{ pal.text60 }};white-space:nowrap;">{{ a.projectName }}</span>
+              </div>
+              <div style="font-size:15px;">{{ a.text }}</div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};white-space:nowrap;padding-top:1px;">{{ a.time }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isReleases }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:680px;">
+        <h1 style="font-size:24px;font-weight:600;margin:0 0 8px;">Releases</h1>
+        <p style="font-size:14px;color:{{ pal.text60 }};margin:0 0 28px;">Recent releases and deployment status across projects.</p>
+        <sc-for list="{{ releaseRows }}" as="r" hint-placeholder-count="6">
+          <button onClick="{{ r.open }}" style="width:100%;text-align:left;background:none;border:none;border-top:1px solid {{ pal.divider }};padding:16px 2px;cursor:pointer;font-family:inherit;color:inherit;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:6px;height:6px;border-radius:50%;background:{{ r.tagColor }};"></div>
+              <span style="font-size:15px;font-weight:600;">{{ r.projectName }}</span>
+              <span style="font-family:'Space Mono',monospace;font-size:13px;color:{{ pal.text60 }};">{{ r.version }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};">{{ r.date }}</span>
+              <span style="font-size:12.5px;font-weight:600;color:{{ r.statusColor }};">{{ r.status }}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isIssues }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:680px;">
+        <h1 style="font-size:24px;font-weight:600;margin:0 0 8px;">Issues</h1>
+        <p style="font-size:14px;color:{{ pal.text60 }};margin:0 0 28px;">Open issues worth knowing about, across every project.</p>
+        <sc-for list="{{ issueRows }}" as="i" hint-placeholder-count="8">
+          <button onClick="{{ i.open }}" style="width:100%;text-align:left;background:none;border:none;border-top:1px solid {{ pal.divider }};padding:16px 2px;cursor:pointer;font-family:inherit;color:inherit;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                <div style="width:6px;height:6px;border-radius:50%;background:{{ i.tagColor }};flex-shrink:0;"></div>
+                <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:{{ pal.text60 }};white-space:nowrap;">{{ i.projectName }}</span>
+              </div>
+              <div style="font-size:15px;">{{ i.title }}</div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};white-space:nowrap;padding-top:1px;">{{ i.age }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isWorkspace }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div style="width:52px;height:52px;border-radius:12px;background:{{ w.accentTint }};border:1px solid {{ w.accentBorder }};color:{{ w.accentSolid }};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;letter-spacing:-0.02em;flex-shrink:0;">{{ w.monogram }}</div>
+            <div>
+              <h1 style="font-size:24px;font-weight:600;margin:0;">{{ w.name }}</h1>
+              <p style="font-size:14px;color:{{ pal.text68 }};margin:4px 0 0;">{{ w.tagline }}</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:12.5px;color:{{ pal.text60 }};padding-top:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:{{ w.statusDot }};"></div>
+            <span>{{ w.statusLabel }}</span>
+            <span style="opacity:0.4;">·</span>
+            <span>{{ w.versionLabel }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:4px;border-bottom:1px solid {{ pal.divider }};margin-bottom:32px;">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+            <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isTabOverview }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ workspaceRowStyle }}">
+            <div style="{{ mainColStyle }}">
+              <section>
+                <h2 style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 10px;">Where we are</h2>
+                <p style="font-size:16px;line-height:1.6;margin:0;color:{{ pal.text88 }};">{{ w.whereWeAre }}</p>
+              </section>
+
+              <section style="background:{{ pal.surfaceBg }};border:1px solid {{ w.accentBorder }};border-radius:12px;padding:20px 22px;position:relative;overflow:hidden;box-shadow:{{ pal.cardShadow }};">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ w.accentSolid }};"></div>
+                <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};margin-bottom:6px;">Next up</div>
+                <div style="font-size:18px;font-weight:600;">{{ w.nextUp }} <span style="color:{{ w.accentSolid }};">→</span></div>
+              </section>
+
+              <section>
+                <h2 style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 12px;">Needs attention</h2>
+                <sc-if value="{{ w.hasAttention }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ w.attentionList }}" as="a" hint-placeholder-count="2">
+                    <div style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;">
+                      <div style="width:5px;height:5px;border-radius:50%;background:{{ pal.dangerDot }};margin-top:8px;flex-shrink:0;"></div>
+                      <p style="font-size:15px;margin:0;">{{ a.text }}</p>
+                    </div>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{ w.hasNoAttention }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:10px;align-items:center;">
+                    <div style="width:6px;height:6px;border-radius:50%;background:{{ pal.successGreen }};flex-shrink:0;"></div>
+                    <p style="font-size:14.5px;color:{{ pal.text65 }};margin:0;">Nothing needs attention. This project is healthy.</p>
+                  </div>
+                </sc-if>
+              </section>
+
+              <section>
+                <h2 style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 4px;">Recent work</h2>
+                <sc-for list="{{ w.recentWorkList }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex;gap:14px;border-top:1px solid {{ pal.divider }};padding:13px 0;">
+                    <div style="display:flex;align-items:baseline;gap:8px;width:110px;flex-shrink:0;">
+                      <span style="width:5px;height:5px;border-radius:50%;background:{{ pal.text50 }};flex-shrink:0;"></span>
+                      <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};">{{ r.date }}</span>
+                    </div>
+                    <span style="font-size:14.5px;">{{ r.text }}</span>
+                  </div>
+                </sc-for>
+              </section>
+            </div>
+
+            <div style="{{ sidebarStyle }}">
+              <div>
+                <h3 style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 10px;">Components</h3>
+                <sc-for list="{{ w.componentsList }}" as="c" hint-placeholder-count="2">
+                  <div style="border-top:1px solid {{ pal.dividerSoft }};padding:10px 0;">
+                    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;">
+                      <span>{{ c.name }}</span>
+                      <span style="font-family:'Space Mono',monospace;font-size:11.5px;font-weight:400;color:{{ pal.text55 }};">{{ c.version }}</span>
+                    </div>
+                    <div style="font-size:12.5px;color:{{ pal.text65 }};margin-top:2px;">{{ c.health }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div>
+                <h3 style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 8px;">Latest release</h3>
+                <sc-if value="{{ w.hasLatestRelease }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-family:'Space Mono',monospace;font-size:13.5px;">{{ w.latestRelease.version }}</span>
+                    <span style="font-size:12px;color:{{ pal.text60 }};">{{ w.latestRelease.date }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ w.hasNoLatestRelease }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:13.5px;color:{{ pal.text55 }};">No release yet</span>
+                </sc-if>
+              </div>
+
+              <div>
+                <h3 style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 8px;">Issues</h3>
+                <span style="font-size:14px;">{{ w.issuesCountLabel }}</span>
+              </div>
+
+              <div>
+                <h3 style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:{{ pal.text50 }};font-weight:400;margin:0 0 10px;">Quick links</h3>
+                <div style="display:flex;flex-direction:column;">
+                  <sc-for list="{{ w.linksList }}" as="l" hint-placeholder-count="3">
+                    <button style="background:none;border:none;border-top:1px solid {{ pal.dividerSoft }};padding:9px 0;text-align:left;font-size:13.5px;font-weight:500;color:{{ pal.text82 }};cursor:pointer;font-family:inherit;">{{ l.label }} ↗</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTabIssues }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:680px;">
+            <sc-if value="{{ w.hasIssues }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ w.projectIssues }}" as="i" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid {{ pal.divider }};padding:16px 2px;">
+                  <span style="font-size:15px;">{{ i.title }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};white-space:nowrap;">{{ i.age }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ w.hasNoIssues }}" hint-placeholder-val="{{ false }}">
+              <p style="font-size:14px;color:{{ pal.text55 }};">No open issues.</p>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTabReleases }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:680px;">
+            <sc-if value="{{ w.hasReleases }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ w.projectReleases }}" as="r" hint-placeholder-count="2">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid {{ pal.divider }};padding:16px 2px;">
+                  <span style="font-family:'Space Mono',monospace;font-size:13px;">{{ r.version }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};">{{ r.date }}</span>
+                  <span style="font-size:12.5px;font-weight:600;color:{{ r.statusColor }};">{{ r.status }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ w.hasNoReleases }}" hint-placeholder-val="{{ false }}">
+              <p style="font-size:14px;color:{{ pal.text55 }};">No releases yet.</p>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTabActivity }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:680px;">
+            <sc-if value="{{ w.hasActivity }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ w.projectActivity }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;border-top:1px solid {{ pal.divider }};padding:16px 2px;gap:16px;">
+                  <span style="font-size:15px;">{{ a.text }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:12px;color:{{ pal.text50 }};white-space:nowrap;">{{ a.time }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ w.hasNoActivity }}" hint-placeholder-val="{{ false }}">
+              <p style="font-size:14px;color:{{ pal.text55 }};">Nothing logged yet.</p>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTabDocs }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:680px;">
+            <sc-if value="{{ w.hasDocs }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ w.docsList }}" as="d" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:10px;border-top:1px solid {{ pal.divider }};padding:14px 2px;">
+                  <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:{{ pal.text50 }};">Doc</span>
+                  <span style="font-size:15px;">{{ d.title }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ w.hasNoDocs }}" hint-placeholder-val="{{ true }}">
+              <p style="font-size:14px;color:{{ pal.text55 }};">No docs linked yet.</p>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { view: null, activeProjectId: null, workspaceTab: 'overview', search: '', statusFilter: 'all', vw: typeof window !== 'undefined' ? window.innerWidth : 1440, theme: null };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+    let stored = null;
+    try { stored = localStorage.getItem('projectdeck-theme'); } catch (e) {}
+    if (stored === 'light' || stored === 'dark') {
+      this.setState({ theme: stored });
+    } else {
+      let prefersDark = true;
+      try { prefersDark = !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches); } catch (e) {}
+      this.setState({ theme: prefersDark ? 'dark' : 'light' });
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  toggleTheme = () => {
+    const next = (this.state.theme || 'dark') === 'dark' ? 'light' : 'dark';
+    this.setState({ theme: next });
+    try { localStorage.setItem('projectdeck-theme', next); } catch (e) {}
+  };
+
+  projects = [
+    { id: 'lifeos', name: 'LifeOS', mark: 'LO', tagline: 'Mobile productivity planner', status: 'active', hue: 300, version: 'v0.1.1', openIssues: 3, components: ['Mobile', 'API'], next: 'Fix the weekly planning experience', lastWork: '2h ago', lastWorkDesc: 'Weekly planning investigation' },
+    { id: 'limitpact', name: 'LimitPact', mark: 'LP', tagline: 'Trading discipline platform', status: 'active', hue: 258, version: 'v0.2.0', openIssues: 2, components: ['Desktop', 'Website'], next: 'Configure notification preferences', lastWork: '3 days ago', lastWorkDesc: 'Workspace migration completed' },
+    { id: 'cockpitpath', name: 'CockpitPath', mark: 'CP', tagline: 'Flight-planning companion for pilots', status: 'planning', hue: 75, version: 'v0.0.4', openIssues: 5, components: ['Web', 'API'], next: 'Define the route-optimization algorithm', lastWork: '6 days ago', lastWorkDesc: 'Sketched the airspace-zone data model' },
+    { id: 'financetracker', name: 'Finance Tracker', mark: 'FT', tagline: 'Personal budgeting and net worth', status: 'stable', hue: 150, version: 'v1.4.2', openIssues: 0, components: ['Web', 'Mobile'], next: 'Add recurring transaction rules', lastWork: '2 weeks ago', lastWorkDesc: 'Polished the monthly summary view' },
+    { id: 'tradingjournal', name: 'Trading Journal', mark: 'TJ', tagline: 'Trade logging and review tool', status: 'attention', hue: 20, version: 'v0.3.0', openIssues: 7, components: ['Web'], next: 'Fix the broken CSV import', lastWork: '1 day ago', lastWorkDesc: 'CSV import started failing after a schema change' },
+    { id: 'panda', name: 'Panda 2.0', mark: 'P2', tagline: 'Habit tracking, rebuilt', status: 'paused', hue: 190, version: 'v2.0.0-beta', openIssues: 1, components: ['Mobile'], next: 'Resume the onboarding redesign', lastWork: '5 weeks ago', lastWorkDesc: 'Left mid-redesign of onboarding' }
+  ];
+
+  workspace = {
+    lifeos: {
+      whereWeAre: 'LifeOS is mid-development on the weekly planning view. Core task management and calendar sync are stable; the new planning experience is the rough edge.',
+      nextUp: 'Fix the weekly planning experience — recurring tasks are duplicating across week boundaries.',
+      needsAttention: ['3 open bugs, one blocking the planning view', 'API rate limiting kicks in during sync-heavy days'],
+      components: [{ name: 'Mobile', health: 'Building, one crash report open', version: 'v0.1.1' }, { name: 'API', health: 'Healthy', version: 'v0.4.0' }],
+      recentWork: [{ date: '2h ago', text: 'Investigated weekly planning duplication bug' }, { date: 'Yesterday', text: 'Added a recurring-task migration script' }, { date: '4 days ago', text: 'Shipped sync conflict resolution' }],
+      links: ['GitHub', 'TestFlight', 'Docs'], docs: [{ title: 'Sync conflict design notes' }]
+    },
+    limitpact: {
+      whereWeAre: 'Desktop v0.2.0 is released and the installer is verified. The website is deployed and the TradeGuard → LimitPact rename is complete.',
+      nextUp: 'Configure notification preferences.',
+      needsAttention: ['2 open bugs in the alerts engine', "Website deploy hasn't been checked today"],
+      components: [{ name: 'Desktop', health: 'Healthy', version: 'v0.2.0' }, { name: 'Website', health: 'Live', version: 'production' }],
+      recentWork: [{ date: 'Today', text: 'Prepared release documentation' }, { date: '3 days ago', text: 'Migrated the workspace to the LimitPact name' }, { date: '4 days ago', text: 'Built and verified the v0.2.0 installer' }],
+      links: ['GitHub', 'Railway', 'Docs', 'Project Board'], docs: [{ title: 'Rename migration notes' }, { title: 'Alert rules reference' }]
+    },
+    cockpitpath: {
+      whereWeAre: "CockpitPath is early. The data model for airspace zones is sketched but the route-optimization approach isn't settled.",
+      nextUp: 'Define the route-optimization algorithm.',
+      needsAttention: ['5 open issues, mostly design questions with no clear owner'],
+      components: [{ name: 'Web', health: 'Prototype', version: 'v0.0.4' }, { name: 'API', health: 'Not started', version: '—' }],
+      recentWork: [{ date: '6 days ago', text: 'Sketched the airspace-zone data model' }, { date: '9 days ago', text: 'Collected sample FAA airspace data for testing' }],
+      links: ['GitHub', 'Docs'], docs: []
+    },
+    financetracker: {
+      whereWeAre: 'Finance Tracker is stable and in daily use. v1.5.0 is ready and waiting on a final review before shipping.',
+      nextUp: 'Add recurring transaction rules.',
+      needsAttention: [],
+      components: [{ name: 'Web', health: 'Healthy', version: 'v1.4.2' }, { name: 'Mobile', health: 'Healthy', version: 'v1.4.0' }],
+      recentWork: [{ date: '2 weeks ago', text: 'Polished the monthly summary view' }, { date: '3 weeks ago', text: 'Added CSV export for transactions' }],
+      links: ['GitHub', 'Vercel', 'Docs'], docs: [{ title: 'Budgeting rules reference' }]
+    },
+    tradingjournal: {
+      whereWeAre: 'Trading Journal broke after a schema change last week. CSV import is failing and needs a fix before anything else.',
+      nextUp: 'Fix the broken CSV import.',
+      needsAttention: ['CSV import fails on quoted fields', "Duplicate trades aren't being merged", '6 other open bugs'],
+      components: [{ name: 'Web', health: 'Degraded', version: 'v0.3.0' }],
+      recentWork: [{ date: '1 day ago', text: 'CSV import started failing after a schema change' }, { date: '5 days ago', text: 'Migrated trade records to the new schema' }],
+      links: ['GitHub', 'Docs'], docs: []
+    },
+    panda: {
+      whereWeAre: 'Panda 2.0 has been paused mid-redesign of onboarding. The habit-tracking core still works; nothing has moved in five weeks.',
+      nextUp: 'Resume the onboarding redesign.',
+      needsAttention: ['1 open issue: onboarding step 3 skips validation'],
+      components: [{ name: 'Mobile', health: 'Paused', version: 'v2.0.0-beta' }],
+      recentWork: [{ date: '5 weeks ago', text: 'Paused mid-redesign of the onboarding flow' }, { date: '6 weeks ago', text: 'Rebuilt habit streak calculation' }],
+      links: ['GitHub'], docs: []
+    }
+  };
+
+  issues = [
+    { project: 'tradingjournal', title: 'CSV import fails on quoted fields', age: '1 day ago' },
+    { project: 'tradingjournal', title: 'Duplicate trades not merged', age: '5 days ago' },
+    { project: 'cockpitpath', title: 'No agreed model for airspace zone overlap', age: '6 days ago' },
+    { project: 'lifeos', title: 'Weekly view duplicates recurring tasks', age: '2 hours ago' },
+    { project: 'lifeos', title: 'Sync API rate-limited during heavy days', age: '4 days ago' },
+    { project: 'limitpact', title: 'Alert digest fires twice for daily summaries', age: '2 days ago' },
+    { project: 'limitpact', title: 'Legacy TradeGuard references remain in /legacy', age: '11 days ago' },
+    { project: 'panda', title: 'Onboarding step 3 skips validation', age: '5 weeks ago' },
+    { project: 'cockpitpath', title: 'FAA sample data missing altitude bands', age: '9 days ago' }
+  ];
+
+  releases = [
+    { project: 'lifeos', version: 'v0.1.1', date: '2 hours ago', status: 'Live' },
+    { project: 'tradingjournal', version: 'v0.3.0', date: '2 weeks ago', status: 'Live' },
+    { project: 'limitpact', version: 'v0.2.0', date: '3 days ago', status: 'Live' },
+    { project: 'financetracker', version: 'v1.5.0', date: 'Pending review', status: 'Ready to ship' },
+    { project: 'financetracker', version: 'v1.4.2', date: '3 weeks ago', status: 'Live' },
+    { project: 'panda', version: 'v2.0.0-beta', date: '5 weeks ago', status: 'Beta' }
+  ];
+
+  activity = [
+    { project: 'limitpact', time: 'Today', text: 'Prepared release documentation' },
+    { project: 'lifeos', time: '2h ago', text: 'Investigated weekly planning duplication bug' },
+    { project: 'tradingjournal', time: '1 day ago', text: 'CSV import started failing after a schema change' },
+    { project: 'lifeos', time: 'Yesterday', text: 'Added a recurring-task migration script' },
+    { project: 'limitpact', time: '3 days ago', text: 'Migrated the workspace to the LimitPact name' },
+    { project: 'limitpact', time: '4 days ago', text: 'Built and verified the v0.2.0 installer' },
+    { project: 'cockpitpath', time: '6 days ago', text: 'Sketched the airspace-zone data model' },
+    { project: 'financetracker', time: '2 weeks ago', text: 'Polished the monthly summary view' },
+    { project: 'panda', time: '5 weeks ago', text: 'Paused mid-redesign of onboarding flow' }
+  ];
+
+  palette(theme) {
+    return theme === 'light' ? {
+      bg: 'oklch(96.5% 0.004 260)', text: 'oklch(20% 0.01 260)',
+      headerBg: 'oklch(99% 0.002 260)', headerBorder: 'oklch(90% 0.006 260)',
+      avatarBg: 'oklch(90% 0.012 260)',
+      surfaceBg: 'oklch(99.3% 0.002 260)', cardBorder: 'oklch(88% 0.008 260)', continueCardBg: 'oklch(99.5% 0.002 260)',
+      divider: 'oklch(89% 0.007 260)', dividerSoft: 'oklch(91% 0.006 260)',
+      text88: 'oklch(28% 0.01 260)', text85: 'oklch(31% 0.01 260)', text82: 'oklch(34% 0.01 260)',
+      text72: 'oklch(40% 0.01 260)', text68: 'oklch(43% 0.01 260)', text65: 'oklch(46% 0.01 260)',
+      text60: 'oklch(49% 0.01 260)', text55: 'oklch(52% 0.01 260)', text50: 'oklch(55% 0.01 260)',
+      chipActiveBg: 'oklch(46% 0.16 258 / 0.10)', chipActiveBorder: 'oklch(46% 0.16 258 / 0.42)', chipActiveText: 'oklch(38% 0.16 258)',
+      focusRing: 'oklch(46% 0.16 258)', selectionBg: 'oklch(46% 0.16 258 / 0.18)',
+      activeGreen: 'oklch(46% 0.15 150)', successGreen: 'oklch(42% 0.10 150)', planningDot: 'oklch(50% 0.02 260)', pausedDot: 'oklch(58% 0.01 260)',
+      dangerDot: 'oklch(50% 0.20 25)', dangerPillBg: 'oklch(50% 0.20 25 / 0.12)',
+      cardShadow: '0 1px 3px oklch(25% 0.01 260 / 0.06)', cardHoverShadowExtra: '0 1px 2px oklch(25% 0.01 260 / 0.05), '
+    } : {
+      bg: 'oklch(15% 0.005 260)', text: 'oklch(95% 0.003 260)',
+      headerBg: 'oklch(17% 0.006 260)', headerBorder: 'oklch(28% 0.01 260)',
+      avatarBg: 'oklch(28% 0.01 260)',
+      surfaceBg: 'oklch(19% 0.006 260)', cardBorder: 'oklch(30% 0.012 260)', continueCardBg: 'oklch(19.5% 0.007 260)',
+      divider: 'oklch(28% 0.01 260)', dividerSoft: 'oklch(26% 0.01 260)',
+      text88: 'oklch(88% 0.005 260)', text85: 'oklch(85% 0.005 260)', text82: 'oklch(82% 0.005 260)',
+      text72: 'oklch(72% 0.008 260)', text68: 'oklch(68% 0.008 260)', text65: 'oklch(65% 0.01 260)',
+      text60: 'oklch(60% 0.01 260)', text55: 'oklch(55% 0.01 260)', text50: 'oklch(50% 0.01 260)',
+      chipActiveBg: 'oklch(72% 0.14 258 / 0.15)', chipActiveBorder: 'oklch(72% 0.14 258 / 0.5)', chipActiveText: 'oklch(85% 0.05 258)',
+      focusRing: 'oklch(72% 0.14 258)', selectionBg: 'oklch(72% 0.14 258 / 0.3)',
+      activeGreen: 'oklch(74% 0.15 150)', successGreen: 'oklch(66% 0.09 150)', planningDot: 'oklch(72% 0.02 260)', pausedDot: 'oklch(52% 0.01 260)',
+      dangerDot: 'oklch(66% 0.19 25)', dangerPillBg: 'oklch(66% 0.19 25 / 0.14)',
+      cardShadow: 'none', cardHoverShadowExtra: ''
+    };
+  }
+
+  statusMetaFor(pal) {
+    return {
+      active: { label: 'Active', dot: pal.activeGreen },
+      planning: { label: 'Planning', dot: pal.planningDot },
+      stable: { label: 'Stable', dot: pal.successGreen },
+      paused: { label: 'Paused', dot: pal.pausedDot },
+      attention: { label: 'Needs Attention', dot: pal.dangerDot }
+    };
+  }
+
+  releaseStatusColorFor(pal) {
+    return { Live: pal.successGreen, Beta: pal.text65, 'Ready to ship': pal.focusRing };
+  }
+
+  accentOf(hue, theme) {
+    const h = this.props.uniqueAccentPerProject === false ? 258 : hue;
+    return theme === 'light'
+      ? { solid: `oklch(46% 0.16 ${h})`, tint: `oklch(46% 0.16 ${h} / 0.10)`, border: `oklch(46% 0.16 ${h} / 0.4)`, glow: `oklch(46% 0.16 ${h} / 0.18)` }
+      : { solid: `oklch(72% 0.14 ${h})`, tint: `oklch(72% 0.14 ${h} / 0.14)`, border: `oklch(72% 0.14 ${h} / 0.4)`, glow: `oklch(72% 0.14 ${h} / 0.28)` };
+  }
+
+  projectById(id) { return this.projects.find(p => p.id === id); }
+
+  buildCard(p, theme, pal) {
+    const accent = this.accentOf(p.hue, theme);
+    const sm = this.statusMetaFor(pal)[p.status];
+    const isAttention = p.status === 'attention';
+    return {
+      id: p.id, name: p.name, tagline: p.tagline, monogram: p.mark,
+      accentSolid: accent.solid, accentTint: accent.tint, accentBorder: accent.border,
+      statusLabel: sm.label, statusDot: sm.dot,
+      statusWrapStyle: isAttention
+        ? `display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;margin-top:1px;border-radius:999px;background:${pal.dangerPillBg};flex-shrink:0;`
+        : 'display:flex;align-items:center;gap:6px;flex-shrink:0;padding-top:2px;',
+      next: p.next, versionLabel: p.version,
+      issuesLabel: p.openIssues === 0 ? 'No open issues' : `${p.openIssues} open issue${p.openIssues > 1 ? 's' : ''}`,
+      componentsLabel: p.components.join(' · '),
+      lastWork: p.lastWork, lastWorkDesc: p.lastWorkDesc,
+      lastWorkLine: `${p.lastWork} — ${p.lastWorkDesc}`,
+      hoverStyle: { transform: 'translateY(-2px)', borderColor: accent.border, boxShadow: `${pal.cardHoverShadowExtra}0 10px 22px -12px ${accent.glow}, 0 0 0 1px ${accent.border}` },
+      open: () => this.setState({ view: 'workspace', activeProjectId: p.id, workspaceTab: 'overview' })
+    };
+  }
+
+  chipStyle(active, pal) {
+    const base = 'padding:7px 14px;border-radius:999px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap;';
+    return active
+      ? base + `background:${pal.chipActiveBg};border:1px solid ${pal.chipActiveBorder};color:${pal.chipActiveText};font-weight:600;`
+      : base + `background:none;border:1px solid ${pal.cardBorder};color:${pal.text65};font-weight:500;`;
+  }
+
+  navBtnStyle(active, pal) {
+    return 'background:none;border:none;padding:8px 4px;font-size:14px;font-family:inherit;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.12s ease;' +
+      (active ? `color:${pal.text};font-weight:600;border-bottom-color:${pal.focusRing};` : `color:${pal.text65};font-weight:500;`);
+  }
+
+  renderVals() {
+    const view = this.state.view || this.props.defaultView || 'overview';
+    const isOverview = view === 'overview';
+    const isProjects = view === 'projects';
+    const isActivity = view === 'activity';
+    const isReleases = view === 'releases';
+    const isIssues = view === 'issues';
+    const isWorkspace = view === 'workspace';
+
+    const theme = this.state.theme || 'dark';
+    const isDark = theme === 'dark';
+    const isLight = theme === 'light';
+    const pal = this.palette(theme);
+
+    const vw = this.state.vw || 1440;
+    const isNarrow = vw < 980;
+    const isCompact = vw < 720;
+
+    const navHoverStyle = { color: pal.text88 };
+
+    const themeToggleLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    const themeToggleStyle = `width:32px;height:32px;border-radius:50%;border:1px solid ${pal.headerBorder};background:none;color:${pal.text65};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:color 0.15s ease, border-color 0.15s ease, background 0.15s ease;`;
+    const themeToggleHoverStyle = { color: pal.text, borderColor: pal.cardBorder, background: pal.avatarBg };
+
+    const cards = this.projects.map(p => this.buildCard(p, theme, pal));
+    const activeCount = this.projects.filter(p => p.status === 'active').length;
+    const attentionCount = this.projects.filter(p => p.status === 'attention').length;
+    const readyCount = this.releases.filter(r => r.status === 'Ready to ship').length;
+    const summaryLine = `${this.projects.length} projects · ${activeCount} active · ${attentionCount} need${attentionCount === 1 ? 's' : ''} attention · ${readyCount} ready to ship`;
+    const continueCard = this.buildCard(this.projectById('limitpact'), theme, pal);
+
+    const statusFilters = [
+      { key: 'all', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'planning', label: 'Planning' },
+      { key: 'stable', label: 'Stable' }, { key: 'attention', label: 'Needs Attention' }, { key: 'paused', label: 'Paused' }
+    ].map(f => ({ label: f.label, style: this.chipStyle(this.state.statusFilter === f.key, pal), onClick: () => this.setState({ statusFilter: f.key }) }));
+
+    const q = this.state.search.trim().toLowerCase();
+    const filteredCards = this.projects
+      .filter(p => (this.state.statusFilter === 'all' || p.status === this.state.statusFilter) && (!q || p.name.toLowerCase().includes(q) || p.tagline.toLowerCase().includes(q)))
+      .map(p => this.buildCard(p, theme, pal));
+
+    const openInProject = (id, tab) => () => this.setState({ view: 'workspace', activeProjectId: id, workspaceTab: tab });
+
+    const releaseStatusColor = this.releaseStatusColorFor(pal);
+
+    const activityRows = this.activity.map(a => {
+      const p = this.projectById(a.project); const accent = this.accentOf(p.hue, theme);
+      return { projectName: p.name, tagColor: accent.solid, time: a.time, text: a.text, open: openInProject(p.id, 'activity') };
+    });
+    const releaseRows = this.releases.map(r => {
+      const p = this.projectById(r.project); const accent = this.accentOf(p.hue, theme);
+      return { projectName: p.name, tagColor: accent.solid, version: r.version, date: r.date, status: r.status, statusColor: releaseStatusColor[r.status], open: openInProject(p.id, 'releases') };
+    });
+    const issueRows = this.issues.map(i => {
+      const p = this.projectById(i.project); const accent = this.accentOf(p.hue, theme);
+      return { projectName: p.name, tagColor: accent.solid, title: i.title, age: i.age, open: openInProject(p.id, 'issues') };
+    });
+
+    let w = null, tabs = [];
+    if (isWorkspace) {
+      const p = this.projectById(this.state.activeProjectId) || this.projects[0];
+      const accent = this.accentOf(p.hue, theme);
+      const sm = this.statusMetaFor(pal)[p.status];
+      const data = this.workspace[p.id];
+      const projectIssues = this.issues.filter(i => i.project === p.id);
+      const projectReleases = this.releases.filter(r => r.project === p.id).map(r => ({ ...r, statusColor: releaseStatusColor[r.status] }));
+      const projectActivity = this.activity.filter(a => a.project === p.id);
+      const latestRelease = projectReleases[0] || null;
+
+      tabs = [{ key: 'overview', label: 'Overview' }, { key: 'issues', label: 'Issues' }, { key: 'releases', label: 'Releases' }, { key: 'activity', label: 'Activity' }, { key: 'docs', label: 'Docs' }]
+        .map(t => ({ label: t.label, style: this.navBtnStyle(this.state.workspaceTab === t.key, pal).replace('padding:8px 4px;', 'padding:10px 14px;margin-bottom:-1px;'), onClick: () => this.setState({ workspaceTab: t.key }) }));
+
+      w = {
+        name: p.name, tagline: p.tagline, monogram: p.mark, accentSolid: accent.solid, accentTint: accent.tint, accentBorder: accent.border,
+        statusLabel: sm.label, statusDot: sm.dot, versionLabel: p.version,
+        whereWeAre: data.whereWeAre, nextUp: data.nextUp,
+        hasAttention: data.needsAttention.length > 0, hasNoAttention: data.needsAttention.length === 0,
+        attentionList: data.needsAttention.map(t => ({ text: t })),
+        componentsList: data.components, recentWorkList: data.recentWork,
+        linksList: data.links.map(l => ({ label: l })),
+        hasIssues: projectIssues.length > 0, hasNoIssues: projectIssues.length === 0, projectIssues,
+        hasReleases: projectReleases.length > 0, hasNoReleases: projectReleases.length === 0, projectReleases,
+        hasActivity: projectActivity.length > 0, hasNoActivity: projectActivity.length === 0, projectActivity,
+        hasDocs: data.docs.length > 0, hasNoDocs: data.docs.length === 0, docsList: data.docs,
+        issuesCountLabel: projectIssues.length === 0 ? 'No open issues' : `${projectIssues.length} open`,
+        hasLatestRelease: !!latestRelease, hasNoLatestRelease: !latestRelease, latestRelease: latestRelease || { version: '—', date: '', status: '' }
+      };
+    }
+
+    const workspaceRowStyle = isNarrow ? 'display:flex;flex-direction:column;gap:32px;' : 'display:flex;gap:44px;align-items:flex-start;';
+    const mainColStyle = isNarrow ? 'flex:1;min-width:0;display:flex;flex-direction:column;gap:32px;max-width:none;' : 'flex:1;min-width:0;display:flex;flex-direction:column;gap:32px;max-width:640px;';
+    const sidebarStyle = isNarrow
+      ? `width:100%;flex-shrink:0;background:${pal.surfaceBg};border:1px solid ${pal.divider};border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:24px;position:static;box-shadow:${pal.cardShadow};`
+      : `width:272px;flex-shrink:0;background:${pal.surfaceBg};border:1px solid ${pal.divider};border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:24px;position:sticky;top:92px;box-shadow:${pal.cardShadow};`;
+    const headerOuterStyle = isCompact ? 'padding:0 20px;gap:16px;flex-wrap:wrap;height:auto;min-height:60px;' : 'padding:0 32px;';
+    const headerLeftGapStyle = isCompact ? 'gap:18px;flex-wrap:wrap;' : 'gap:32px;';
+
+    return {
+      isOverview, isProjects, isActivity, isReleases, isIssues, isWorkspace,
+      pal, isDark, isLight, toggleTheme: this.toggleTheme, themeToggleLabel, themeToggleStyle, themeToggleHoverStyle,
+      workspaceName: isWorkspace ? w.name : '',
+      navRowStyle: isWorkspace ? 'display:none;' : '',
+      headerOuterStyle, headerLeftGapStyle, navHoverStyle,
+      workspaceRowStyle, mainColStyle, sidebarStyle,
+      overviewNavStyle: this.navBtnStyle(isOverview, pal), projectsNavStyle: this.navBtnStyle(isProjects, pal),
+      activityNavStyle: this.navBtnStyle(isActivity, pal), releasesNavStyle: this.navBtnStyle(isReleases, pal), issuesNavStyle: this.navBtnStyle(isIssues, pal),
+      goOverview: () => this.setState({ view: 'overview' }), goProjects: () => this.setState({ view: 'projects' }),
+      goActivity: () => this.setState({ view: 'activity' }), goReleases: () => this.setState({ view: 'releases' }), goIssues: () => this.setState({ view: 'issues' }),
+      backToProjects: () => this.setState({ view: 'projects' }),
+
+      summaryLine, continueCard, cards,
+      statusFilters, search: this.state.search, setSearch: (e) => this.setState({ search: e.target.value }),
+      hasFilteredCards: filteredCards.length > 0, hasNoFilteredCards: filteredCards.length === 0, filteredCards,
+      underlineHover: { textDecoration: 'underline' },
+
+      activityRows, releaseRows, issueRows,
+
+      w, tabs,
+      isTabOverview: isWorkspace && this.state.workspaceTab === 'overview',
+      isTabIssues: isWorkspace && this.state.workspaceTab === 'issues',
+      isTabReleases: isWorkspace && this.state.workspaceTab === 'releases',
+      isTabActivity: isWorkspace && this.state.workspaceTab === 'activity',
+      isTabDocs: isWorkspace && this.state.workspaceTab === 'docs'
+    };
+  }
+}
+
+</script>
+</body>
+</html>
