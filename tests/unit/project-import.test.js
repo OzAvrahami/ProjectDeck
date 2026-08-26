@@ -4,13 +4,13 @@ import {
   chooseProjectAccent,
   ImportValidationError,
   uniqueProjectSlug,
-  validateGitHubImportGroups,
+  validateGitHubImportCandidates,
 } from "../../lib/projects/import-logic.js";
 
-describe("GitHub Project import logic", () => {
+describe("GitHub Project candidate import logic", () => {
   it("rejects duplicate repository identities before persistence", () => {
     expect(() =>
-      validateGitHubImportGroups([
+      validateGitHubImportCandidates([
         {
           projectName: "One",
           repositories: [{ externalId: "123" }],
@@ -25,7 +25,7 @@ describe("GitHub Project import logic", () => {
 
   it("normalizes optional next actions and component names", () => {
     expect(
-      validateGitHubImportGroups([
+      validateGitHubImportCandidates([
         {
           projectName: " LimitPact ",
           nextAction: " ",

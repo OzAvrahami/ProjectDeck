@@ -6,7 +6,7 @@ import {
   discoverGitHubRepositories,
   GitHubDiscoveryError,
 } from "../../../lib/github/index.js";
-import { importGitHubRepositoryGroups } from "../../../lib/projects/import-github.js";
+import { importGitHubRepositoryCandidates } from "../../../lib/projects/import-github.js";
 import { ImportValidationError } from "../../../lib/projects/import-logic.js";
 
 export async function importGitHubRepositoriesAction(_previousState, formData) {
@@ -15,15 +15,15 @@ export async function importGitHubRepositoriesAction(_previousState, formData) {
   if (typeof serializedPayload !== "string") {
     return {
       status: "error",
-      message: "The import request was incomplete. Review the grouping and try again.",
+      message: "The import request was incomplete. Review the Projects and try again.",
     };
   }
 
   try {
     const payload = JSON.parse(serializedPayload);
     const repositories = await discoverGitHubRepositories();
-    const result = await importGitHubRepositoryGroups(
-      payload.groups,
+    const result = await importGitHubRepositoryCandidates(
+      payload.candidates,
       repositories,
     );
 

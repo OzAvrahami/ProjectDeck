@@ -69,7 +69,7 @@ export default async function GitHubSetupPage() {
   );
 
   return (
-    <AppShell>
+    <AppShell activeSection={null}>
       <GitHubImport
         repositories={repositories}
         existingProjects={projectDeck.projects}

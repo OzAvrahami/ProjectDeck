@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { importGitHubRepositoriesAction } from "../../app/setup/github/actions.js";
 import {
-  filterRepositories,
-  suggestComponentName,
-  suggestGroupProjectName,
-  suggestProjectName,
-} from "../../lib/github/repositories.js";
+  applyCandidateGrouping,
+  createGroupingDraft,
+  createProjectCandidates,
+  separateProjectCandidate,
+} from "../../lib/github/import-candidates.js";
+import { filterRepositories } from "../../lib/github/repositories.js";
 
 const INITIAL_ACTION_STATE = { status: "idle", message: "" };
 
@@ -23,14 +24,12 @@ function formatRepositoryDate(value) {
   }).format(new Date(value));
 }
 
-function newGroupForRepository(repository) {
-  return {
-    id: `group-${repository.id}`,
-    targetProjectId: "",
-    projectName: suggestProjectName(repository.name),
-    nextAction: "",
-    repositories: [{ externalId: repository.id, componentName: "" }],
-  };
+function repositoryCountLabel(count) {
+  return `${count} ${count === 1 ? "repository" : "repositories"}`;
+}
+
+function projectCountLabel(count) {
+  return `${count} ${count === 1 ? "Project" : "Projects"}`;
 }
 
 export function GitHubImport({
@@ -44,9 +43,12 @@ export function GitHubImport({
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showForks, setShowForks] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [step, setStep] = useState("discover");
-  const [groups, setGroups] = useState([]);
+  const [selectedRepositoryIds, setSelectedRepositoryIds] = useState([]);
+  const [step, setStep] = useState("select");
+  const [candidates, setCandidates] = useState([]);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
+  const [groupingDraft, setGroupingDraft] = useState(null);
+  const [existingProjectPickerId, setExistingProjectPickerId] = useState(null);
   const [actionState, formAction, isImporting] = useActionState(
     importGitHubRepositoriesAction,
     INITIAL_ACTION_STATE,
@@ -65,6 +67,10 @@ export function GitHubImport({
     () => new Map(repositories.map((repository) => [repository.id, repository])),
     [repositories],
   );
+  const existingProjectById = useMemo(
+    () => new Map(existingProjects.map((project) => [project.id, project])),
+    [existingProjects],
+  );
   const archivedCount = repositories.filter(
     (repository) => repository.archived,
   ).length;
@@ -78,161 +84,122 @@ export function GitHubImport({
   }
 
   function toggleRepository(repositoryId) {
-    setSelectedIds((current) =>
+    setSelectedRepositoryIds((current) =>
       current.includes(repositoryId)
         ? current.filter((id) => id !== repositoryId)
         : [...current, repositoryId],
     );
   }
 
-  function beginGrouping() {
+  function beginReview() {
     const selectedRepositories = repositories.filter((repository) =>
-      selectedIds.includes(repository.id),
+      selectedRepositoryIds.includes(repository.id),
     );
 
-    setGroups(selectedRepositories.map(newGroupForRepository));
-    setStep("group");
+    setCandidates(createProjectCandidates(selectedRepositories));
+    setSelectedCandidateIds([]);
+    setGroupingDraft(null);
+    setExistingProjectPickerId(null);
+    setStep("review");
   }
 
-  function updateGroup(groupId, update) {
-    setGroups((current) =>
-      current.map((group) =>
-        group.id === groupId ? { ...group, ...update } : group,
+  function updateCandidate(candidateId, update) {
+    setCandidates((current) =>
+      current.map((candidate) =>
+        candidate.id === candidateId ? { ...candidate, ...update } : candidate,
       ),
     );
   }
 
-  function updateRepositoryAssignment(groupId, externalId, componentName) {
-    setGroups((current) =>
-      current.map((group) =>
-        group.id === groupId
+  function updateRepositoryAssignment(
+    candidateId,
+    externalId,
+    componentName,
+  ) {
+    setCandidates((current) =>
+      current.map((candidate) =>
+        candidate.id === candidateId
           ? {
-              ...group,
-              repositories: group.repositories.map((repository) =>
+              ...candidate,
+              repositories: candidate.repositories.map((repository) =>
                 repository.externalId === externalId
                   ? { ...repository, componentName }
                   : repository,
               ),
             }
-          : group,
+          : candidate,
       ),
     );
   }
 
-  function moveRepository(sourceGroupId, externalId, targetGroupId) {
-    setGroups((current) => {
-      const sourceGroup = current.find((group) => group.id === sourceGroupId);
-      const assignment = sourceGroup?.repositories.find(
-        (repository) => repository.externalId === externalId,
-      );
-
-      if (!sourceGroup || !assignment || targetGroupId === sourceGroupId) {
-        return current;
-      }
-
-      if (targetGroupId === "separate") {
-        if (sourceGroup.repositories.length === 1) {
-          return current;
-        }
-
-        const repository = repositoryById.get(externalId);
-        const separateGroup = {
-          ...newGroupForRepository(repository),
-          id: `group-${externalId}-${Date.now()}`,
-        };
-
-        return [
-          ...current.map((group) =>
-            group.id === sourceGroupId
-              ? {
-                  ...group,
-                  repositories: group.repositories.filter(
-                    (item) => item.externalId !== externalId,
-                  ),
-                }
-              : group,
-          ),
-          separateGroup,
-        ];
-      }
-
-      const targetGroup = current.find((group) => group.id === targetGroupId);
-
-      if (!targetGroup) {
-        return current;
-      }
-
-      const groupedRepositories = [
-        ...targetGroup.repositories.map((item) =>
-          repositoryById.get(item.externalId),
-        ),
-        repositoryById.get(externalId),
-      ];
-      const movedAssignment = {
-        ...assignment,
-        componentName:
-          assignment.componentName ||
-          suggestComponentName(
-            repositoryById.get(externalId),
-            groupedRepositories,
-          ),
-      };
-
-      return current
-        .map((group) => {
-          if (group.id === sourceGroupId) {
-            return {
-              ...group,
-              repositories: group.repositories.filter(
-                (repository) => repository.externalId !== externalId,
-              ),
-            };
-          }
-
-          if (group.id === targetGroupId) {
-            return {
-              ...group,
-              repositories: [...group.repositories, movedAssignment],
-            };
-          }
-
-          return group;
-        })
-        .filter((group) => group.repositories.length > 0);
-    });
+  function toggleCandidate(candidateId) {
+    setSelectedCandidateIds((current) =>
+      current.includes(candidateId)
+        ? current.filter((id) => id !== candidateId)
+        : [...current, candidateId],
+    );
   }
 
-  function combineAllRepositories() {
-    const groupedRepositories = groups.flatMap((group) =>
-      group.repositories.map((assignment) =>
-        repositoryById.get(assignment.externalId),
+  function beginExplicitGrouping() {
+    setGroupingDraft(
+      createGroupingDraft(
+        candidates,
+        selectedCandidateIds,
+        repositories,
       ),
     );
-    const firstGroup = groups[0];
+  }
 
-    setGroups([
-      {
-        ...firstGroup,
-        targetProjectId: "",
-        projectName: suggestGroupProjectName(groupedRepositories),
-        nextAction: "",
-        repositories: groupedRepositories.map((repository) => ({
-          externalId: repository.id,
-          componentName: suggestComponentName(
-            repository,
-            groupedRepositories,
-          ),
-        })),
-      },
-    ]);
+  function updateGroupingRepository(externalId, componentName) {
+    setGroupingDraft((current) => ({
+      ...current,
+      repositories: current.repositories.map((repository) =>
+        repository.externalId === externalId
+          ? { ...repository, componentName }
+          : repository,
+      ),
+    }));
+  }
+
+  function confirmGrouping() {
+    setCandidates((current) =>
+      applyCandidateGrouping(current, groupingDraft),
+    );
+    setSelectedCandidateIds([]);
+    setGroupingDraft(null);
+    setExistingProjectPickerId(null);
+  }
+
+  function separateCandidate(candidateId) {
+    setCandidates((current) =>
+      separateProjectCandidate(current, candidateId, repositories),
+    );
+    setSelectedCandidateIds((current) =>
+      current.filter((id) => id !== candidateId),
+    );
+    setExistingProjectPickerId((current) =>
+      current === candidateId ? null : current,
+    );
+  }
+
+  function showExistingProjectPicker(candidateId) {
+    setExistingProjectPickerId(candidateId);
+    setSelectedCandidateIds((current) =>
+      current.filter((id) => id !== candidateId),
+    );
+  }
+
+  function switchToNewProject(candidateId) {
+    updateCandidate(candidateId, { targetProjectId: "" });
+    setExistingProjectPickerId(null);
   }
 
   const importPayload = JSON.stringify({
-    groups: groups.map((group) => ({
-      targetProjectId: group.targetProjectId || null,
-      projectName: group.projectName,
-      nextAction: group.nextAction,
-      repositories: group.repositories,
+    candidates: candidates.map((candidate) => ({
+      targetProjectId: candidate.targetProjectId || null,
+      projectName: candidate.projectName,
+      nextAction: candidate.nextAction,
+      repositories: candidate.repositories,
     })),
   });
 
@@ -265,12 +232,11 @@ export function GitHubImport({
             Setup / GitHub
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
-            Connect repositories to Projects
+            Import GitHub repositories
           </h1>
           <p className="mt-3 leading-7 text-subtle">
-            GitHub supplies the technical facts. You decide which repositories
-            belong to the same product and whether Components make that
-            relationship clearer.
+            Choose the repositories you want in ProjectDeck. Each repository
+            starts as its own Project; grouping is an optional review step.
           </p>
         </div>
         <button
@@ -279,7 +245,7 @@ export function GitHubImport({
           onClick={refreshDiscovery}
           disabled={isRefreshing}
         >
-          {isRefreshing ? "Scanning…" : "Scan again"}
+          {isRefreshing ? "Scanning..." : "Scan again"}
         </button>
       </div>
 
@@ -309,14 +275,14 @@ export function GitHubImport({
         </div>
       ) : null}
 
-      {!discoveryError && repositories.length > 0 && step === "discover" ? (
+      {!discoveryError && repositories.length > 0 && step === "select" ? (
         <>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
             <p className="font-mono text-xs text-muted">
-              {repositories.length} discovered · {connectedCount} connected
+              {repositories.length} discovered / {connectedCount} connected
             </p>
             <p className="text-sm text-subtle">
-              {selectedIds.length} selected
+              {selectedRepositoryIds.length} selected
             </p>
           </div>
 
@@ -352,7 +318,7 @@ export function GitHubImport({
           <div className="mt-6 divide-y divide-line border-y border-line">
             {visibleRepositories.map((repository) => {
               const disabled = repository.imported || Boolean(databaseError);
-              const selected = selectedIds.includes(repository.id);
+              const selected = selectedRepositoryIds.includes(repository.id);
 
               return (
                 <div
@@ -404,7 +370,7 @@ export function GitHubImport({
                       </p>
                     ) : null}
                     <p className="mt-2 font-mono text-xs text-muted">
-                      {repository.language ?? "Language unknown"} · Last pushed{" "}
+                      {repository.language ?? "Language unknown"} / Last pushed{" "}
                       {formatRepositoryDate(repository.pushedAt)}
                     </p>
                   </div>
@@ -419,96 +385,265 @@ export function GitHubImport({
             </p>
           ) : null}
 
-          <div className="mt-7 flex justify-end">
+          <div className="mt-7 flex justify-end border-t border-line pt-5">
             <button
-              className="rounded-lg bg-foreground px-5 py-3 text-sm font-semibold text-background disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-transparent bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-[background-color,color,opacity] enabled:hover:opacity-85 disabled:cursor-not-allowed disabled:border-line disabled:bg-avatar disabled:text-subtle"
               type="button"
-              disabled={selectedIds.length === 0 || Boolean(databaseError)}
-              onClick={beginGrouping}
+              disabled={
+                selectedRepositoryIds.length === 0 || Boolean(databaseError)
+              }
+              onClick={beginReview}
             >
-              Group {selectedIds.length || "selected"} repositories →
+              {selectedRepositoryIds.length === 0
+                ? "Select repositories to continue"
+                : `Continue with ${repositoryCountLabel(selectedRepositoryIds.length)} →`}
             </button>
           </div>
         </>
       ) : null}
 
-      {step === "group" ? (
+      {step === "review" ? (
         <div className="mt-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
-                Confirm Project structure
+                Review Project candidates
               </p>
               <p className="mt-2 text-sm text-subtle">
-                Repositories remain separate unless you explicitly move them
-                into the same Project.
+                Each selected repository is a separate Project by default.
+                Select two or more candidates only when you want to group them.
               </p>
             </div>
-            <div className="flex gap-3">
-              <button
-                className="rounded-lg border border-line px-4 py-2 text-sm font-semibold"
-                type="button"
-                onClick={() => setStep("discover")}
-              >
-                Back
-              </button>
-              {groups.length > 1 ? (
-                <button
-                  className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:border-accent"
-                  type="button"
-                  onClick={combineAllRepositories}
-                >
-                  Combine all into one Project
-                </button>
-              ) : null}
-            </div>
+            <button
+              className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:border-accent"
+              type="button"
+              onClick={() => setStep("select")}
+            >
+              Back to repositories
+            </button>
           </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+            <p className="text-sm text-subtle">
+              {selectedCandidateIds.length === 0
+                ? "Select Project candidates to group them."
+                : `${selectedCandidateIds.length} selected for grouping`}
+            </p>
+            <button
+              className="rounded-lg border border-line bg-background px-4 py-2 text-sm font-semibold hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
+              type="button"
+              disabled={selectedCandidateIds.length < 2}
+              onClick={beginExplicitGrouping}
+            >
+              Group into one Project
+            </button>
+          </div>
+
+          {groupingDraft ? (
+            <section
+              className="mt-5 rounded-2xl border border-accent bg-surface p-5 sm:p-6"
+              aria-labelledby="group-project-heading"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2
+                    className="text-lg font-semibold"
+                    id="group-project-heading"
+                  >
+                    Group repositories into one Project
+                  </h2>
+                  <p className="mt-1 text-sm text-subtle">
+                    Confirm the shared Project name and optional Components.
+                  </p>
+                </div>
+                <button
+                  className="text-sm font-semibold text-subtle hover:text-foreground"
+                  type="button"
+                  onClick={() => setGroupingDraft(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <label className="mt-5 block max-w-xl text-sm font-medium">
+                Project name
+                <input
+                  className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2.5 text-sm"
+                  value={groupingDraft.projectName}
+                  maxLength={160}
+                  onChange={(event) =>
+                    setGroupingDraft((current) => ({
+                      ...current,
+                      projectName: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <div className="mt-5 divide-y divide-line border-y border-line">
+                {groupingDraft.repositories.map((assignment) => {
+                  const repository = repositoryById.get(assignment.externalId);
+
+                  return (
+                    <div
+                      className="grid gap-3 py-4 sm:grid-cols-[1fr_0.8fr] sm:items-end"
+                      key={assignment.externalId}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+                          Repository
+                        </p>
+                        <p className="mt-1 truncate font-semibold">
+                          {repository.fullName}
+                        </p>
+                      </div>
+                      <label className="text-sm font-medium">
+                        Component <span className="text-muted">optional</span>
+                        <input
+                          className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
+                          value={assignment.componentName}
+                          maxLength={160}
+                          placeholder="e.g. Desktop"
+                          onChange={(event) =>
+                            updateGroupingRepository(
+                              assignment.externalId,
+                              event.target.value,
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex justify-end">
+                <button
+                  className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:cursor-not-allowed disabled:opacity-40"
+                  type="button"
+                  disabled={!groupingDraft.projectName.trim()}
+                  onClick={confirmGrouping}
+                >
+                  Create {groupingDraft.projectName.trim() || "Project"}
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <form action={formAction} className="mt-7 space-y-5">
             <input type="hidden" name="payload" value={importPayload} />
-            {groups.map((group, groupIndex) => {
-              const isExistingProject = Boolean(group.targetProjectId);
+            {candidates.map((candidate) => {
+              const existingProject = existingProjectById.get(
+                candidate.targetProjectId,
+              );
+              const isExistingProject = Boolean(existingProject);
+              const candidateTitle =
+                existingProject?.name || candidate.projectName || "New Project";
+              const showsExistingProjectPicker =
+                existingProjectPickerId === candidate.id;
 
               return (
-                <fieldset
+                <article
                   className="rounded-2xl border border-line bg-surface p-5 sm:p-6"
-                  key={group.id}
+                  key={candidate.id}
                 >
-                  <legend className="px-2 font-mono text-xs uppercase tracking-[0.14em] text-muted">
-                    Project {groupIndex + 1}
-                  </legend>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <label className="flex min-w-0 items-start gap-3">
+                      <input
+                        className="mt-1 h-4 w-4 accent-[var(--accent)]"
+                        type="checkbox"
+                        aria-label={`Select ${candidateTitle} for grouping`}
+                        checked={selectedCandidateIds.includes(candidate.id)}
+                        disabled={isExistingProject}
+                        onChange={() => toggleCandidate(candidate.id)}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                          {isExistingProject
+                            ? "Add to existing Project"
+                            : candidate.repositories.length > 1
+                              ? `${candidate.repositories.length} repositories`
+                              : "Project candidate"}
+                        </span>
+                        <span className="mt-1 block truncate text-lg font-semibold">
+                          {candidateTitle}
+                        </span>
+                      </span>
+                    </label>
 
-                  <label className="block text-sm font-medium">
-                    Import destination
-                    <select
-                      className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2.5 text-sm"
-                      value={group.targetProjectId}
-                      onChange={(event) =>
-                        updateGroup(group.id, {
-                          targetProjectId: event.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Create a new Project</option>
-                      {existingProjects.map((project) => (
-                        <option key={project.id} value={project.id}>
-                          Add to {project.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                    <div className="flex flex-wrap gap-3">
+                      {candidate.repositories.length > 1 &&
+                      !isExistingProject ? (
+                        <button
+                          className="text-sm font-semibold text-subtle hover:text-foreground"
+                          type="button"
+                          onClick={() => separateCandidate(candidate.id)}
+                        >
+                          Separate repositories
+                        </button>
+                      ) : null}
+                      {existingProjects.length > 0 &&
+                      !showsExistingProjectPicker &&
+                      !isExistingProject ? (
+                        <button
+                          className="text-sm font-semibold text-subtle hover:text-foreground"
+                          type="button"
+                          onClick={() =>
+                            showExistingProjectPicker(candidate.id)
+                          }
+                        >
+                          Add to existing Project
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
 
-                  {!isExistingProject ? (
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {showsExistingProjectPicker || isExistingProject ? (
+                    <div className="mt-5 rounded-xl border border-line bg-background p-4">
                       <label className="block text-sm font-medium">
-                        Project display name
+                        Existing Project
+                        <select
+                          className="mt-2 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm"
+                          value={candidate.targetProjectId}
+                          onChange={(event) =>
+                            updateCandidate(candidate.id, {
+                              targetProjectId: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">Choose a Project</option>
+                          {existingProjects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs leading-5 text-muted">
+                          Existing lifecycle, attention, description, and Next
+                          action will not be changed.
+                        </p>
+                        <button
+                          className="text-sm font-semibold text-subtle hover:text-foreground"
+                          type="button"
+                          onClick={() => switchToNewProject(candidate.id)}
+                        >
+                          Create a new Project instead
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                      <label className="block text-sm font-medium">
+                        Project name
                         <input
                           className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2.5 text-sm"
-                          value={group.projectName}
+                          value={candidate.projectName}
                           maxLength={160}
                           required
                           onChange={(event) =>
-                            updateGroup(group.id, {
+                            updateCandidate(candidate.id, {
                               projectName: event.target.value,
                             })
                           }
@@ -518,91 +653,67 @@ export function GitHubImport({
                         Next action <span className="text-muted">optional</span>
                         <input
                           className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2.5 text-sm"
-                          value={group.nextAction}
+                          value={candidate.nextAction}
                           placeholder="Leave empty if not decided"
                           onChange={(event) =>
-                            updateGroup(group.id, {
+                            updateCandidate(candidate.id, {
                               nextAction: event.target.value,
                             })
                           }
                         />
                       </label>
                     </div>
-                  ) : (
-                    <p className="mt-4 text-sm text-muted">
-                      The existing Project&apos;s lifecycle, attention, description,
-                      and Next action will not be changed.
-                    </p>
                   )}
 
                   <div className="mt-6 divide-y divide-line border-y border-line">
-                    {group.repositories.map((assignment) => {
+                    {candidate.repositories.map((assignment) => {
                       const repository = repositoryById.get(
                         assignment.externalId,
                       );
+                      const showComponent =
+                        candidate.repositories.length > 1 || isExistingProject;
 
                       return (
                         <div
-                          className="grid gap-4 py-4 lg:grid-cols-[1fr_0.8fr_0.9fr] lg:items-end"
+                          className={`grid gap-3 py-4 ${
+                            showComponent
+                              ? "sm:grid-cols-[1fr_0.8fr] sm:items-end"
+                              : ""
+                          }`}
                           key={assignment.externalId}
                         >
                           <div className="min-w-0">
-                            <p className="truncate font-semibold">
+                            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+                              Repository
+                            </p>
+                            <p className="mt-1 truncate font-semibold">
                               {repository.fullName}
                             </p>
-                            <p className="mt-1 font-mono text-xs text-muted">
-                              GitHub repository
-                            </p>
                           </div>
-                          <label className="text-sm font-medium">
-                            Component <span className="text-muted">optional</span>
-                            <input
-                              className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
-                              value={assignment.componentName}
-                              maxLength={160}
-                              placeholder="e.g. Desktop"
-                              onChange={(event) =>
-                                updateRepositoryAssignment(
-                                  group.id,
-                                  assignment.externalId,
-                                  event.target.value,
-                                )
-                              }
-                            />
-                          </label>
-                          <label className="text-sm font-medium">
-                            Project group
-                            <select
-                              className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
-                              value={group.id}
-                              onChange={(event) =>
-                                moveRepository(
-                                  group.id,
-                                  assignment.externalId,
-                                  event.target.value,
-                                )
-                              }
-                            >
-                              {groups.map((candidate, index) => (
-                                <option key={candidate.id} value={candidate.id}>
-                                  Project {index + 1}
-                                  {candidate.projectName
-                                    ? ` · ${candidate.projectName}`
-                                    : ""}
-                                </option>
-                              ))}
-                              {group.repositories.length > 1 ? (
-                                <option value="separate">
-                                  Move to a new separate Project
-                                </option>
-                              ) : null}
-                            </select>
-                          </label>
+                          {showComponent ? (
+                            <label className="text-sm font-medium">
+                              Component{" "}
+                              <span className="text-muted">optional</span>
+                              <input
+                                className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
+                                value={assignment.componentName}
+                                maxLength={160}
+                                placeholder="e.g. Desktop"
+                                onChange={(event) =>
+                                  updateRepositoryAssignment(
+                                    candidate.id,
+                                    assignment.externalId,
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            </label>
+                          ) : null}
                         </div>
                       );
                     })}
                   </div>
-                </fieldset>
+                </article>
               );
             })}
 
@@ -619,9 +730,11 @@ export function GitHubImport({
               <button
                 className="rounded-lg bg-foreground px-5 py-3 text-sm font-semibold text-background disabled:cursor-wait disabled:opacity-50"
                 type="submit"
-                disabled={isImporting}
+                disabled={isImporting || Boolean(groupingDraft)}
               >
-                {isImporting ? "Saving import…" : "Confirm import"}
+                {isImporting
+                  ? "Saving import..."
+                  : `Import ${projectCountLabel(candidates.length)}`}
               </button>
             </div>
           </form>
