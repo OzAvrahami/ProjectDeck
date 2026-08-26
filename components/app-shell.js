@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PROJECT_SECTIONS } from "../lib/projects/navigation";
+import { PORTFOLIO_NAVIGATION } from "../lib/projects/navigation";
 import { ThemeToggle } from "./theme-toggle.js";
 
 export function AppShell({ children, activeSection = null, workspaceName = null }) {
@@ -27,21 +27,21 @@ export function AppShell({ children, activeSection = null, workspaceName = null 
             ) : (
               <nav aria-label="Portfolio navigation">
                 <ul className="flex flex-wrap gap-1 text-sm">
-                  {PROJECT_SECTIONS.map((section, index) => (
-                    <li key={section}>
-                      {index === 0 ? (
+                  {PORTFOLIO_NAVIGATION.map((item) => (
+                    <li key={item.label}>
+                      {item.enabled ? (
                         <Link
                           className={`header-nav-item ${
-                            activeSection === section
+                            activeSection === item.label
                               ? "header-nav-item-active"
                               : ""
                           }`}
-                          href="/"
+                          href={item.href}
                           aria-current={
-                            activeSection === section ? "page" : undefined
+                            activeSection === item.label ? "page" : undefined
                           }
                         >
-                          {section}
+                          {item.label}
                         </Link>
                       ) : (
                         <span
@@ -49,7 +49,7 @@ export function AppShell({ children, activeSection = null, workspaceName = null 
                           aria-disabled="true"
                           title="Coming in a later ProjectDeck slice"
                         >
-                          {section}
+                          {item.label}
                         </span>
                       )}
                     </li>

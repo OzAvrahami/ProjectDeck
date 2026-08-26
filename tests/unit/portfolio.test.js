@@ -71,8 +71,32 @@ describe("Portfolio view model", () => {
     expect(card.nextAction).toBeNull();
     expect(card.components).toEqual([]);
     expect(card.hasLastWork).toBe(false);
-    expect(card).not.toHaveProperty("issueCount");
+    expect(card.issueSummary).toBeNull();
+    expect(card.releaseSummary).toBeNull();
     expect(card).not.toHaveProperty("version");
     expect(card).not.toHaveProperty("releaseState");
+  });
+
+  it("uses only scoped GitHub summaries supplied by the observation layer", () => {
+    const card = buildProjectCardViewModel(
+      project({
+        githubSummary: {
+          repositoryCount: 2,
+          issues: {
+            label: "3+ open issues",
+            status: "partial",
+            checkedRepositoryCount: 1,
+          },
+          releases: { compactLabel: "Desktop v0.2.0" },
+        },
+      }),
+    );
+
+    expect(card.issueSummary).toEqual({
+      label: "3+ open issues",
+      status: "partial",
+      description: "1 of 2 repositories checked",
+    });
+    expect(card.releaseSummary).toEqual({ label: "Desktop v0.2.0" });
   });
 });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
 export function ProjectMark({ card, size = "card" }) {
   const sizeClass = size === "continue" ? "project-mark-large" : "project-mark";
@@ -16,6 +17,24 @@ export function ProjectCard({ card }) {
     : card.lastWorkedLabel
       ? `Last worked ${card.lastWorkedLabel}`
       : null;
+  const metadata = [
+    card.releaseSummary
+      ? { key: "release", label: card.releaseSummary.label }
+      : null,
+    card.issueSummary
+      ? {
+          key: "issues",
+          label: card.issueSummary.label,
+          title: card.issueSummary.description,
+        }
+      : null,
+    card.components.length > 0
+      ? {
+          key: "components",
+          label: card.components.map((component) => component.name).join(" · "),
+        }
+      : null,
+  ].filter(Boolean);
 
   return (
     <Link
@@ -73,9 +92,18 @@ export function ProjectCard({ card }) {
         </p>
       </div>
 
-      {card.components.length > 0 ? (
-        <p className="font-mono text-xs leading-5 text-muted">
-          {card.components.map((component) => component.name).join(" · ")}
+      {metadata.length > 0 ? (
+        <p className="flex flex-wrap items-center gap-x-2 font-mono text-xs leading-5 text-muted">
+          {metadata.map((item, index) => (
+            <Fragment key={item.key}>
+              {index > 0 ? (
+                <span className="opacity-45" aria-hidden="true">
+                  ·
+                </span>
+              ) : null}
+              <span title={item.title ?? undefined}>{item.label}</span>
+            </Fragment>
+          ))}
         </p>
       ) : null}
 

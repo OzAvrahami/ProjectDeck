@@ -4,6 +4,7 @@ import {
   PortfolioErrorState,
   PortfolioHome,
 } from "../components/portfolio/portfolio-home.js";
+import { observeProjectsGitHub } from "../lib/projects/github-observations.js";
 import { buildPortfolioViewModel } from "../lib/projects/portfolio.js";
 import { listPortfolioProjects } from "../lib/projects/queries.js";
 
@@ -21,6 +22,8 @@ export default async function HomePage() {
       </AppShell>
     );
   }
+
+  projects = await observeProjectsGitHub(projects);
 
   return (
     <AppShell activeSection="Overview">
