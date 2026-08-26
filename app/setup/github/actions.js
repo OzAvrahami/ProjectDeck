@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireAccessSession } from "../../../lib/access/server.js";
 import {
   discoverGitHubRepositories,
   GitHubDiscoveryError,
@@ -10,6 +11,7 @@ import { importGitHubRepositoryCandidates } from "../../../lib/projects/import-g
 import { ImportValidationError } from "../../../lib/projects/import-logic.js";
 
 export async function importGitHubRepositoriesAction(_previousState, formData) {
+  await requireAccessSession();
   const serializedPayload = formData.get("payload");
 
   if (typeof serializedPayload !== "string") {

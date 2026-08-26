@@ -21,7 +21,7 @@ The current single-user MVP includes:
 
 ## Current status
 
-ProjectDeck has a runnable Next.js 16 MVP backed by its own Neon database. It is intended for a private, single-user deployment: authentication, background synchronization, AI synthesis, and team features are deliberately not implemented. Provider credentials remain server-side through `DATABASE_URL`, `GITHUB_TOKEN`, and `RAILWAY_TOKEN`.
+ProjectDeck has a runnable Next.js 16 MVP backed by its own Neon database. It is intended for a private, single-user deployment protected by one password and a signed session cookie; signup, accounts, and multi-user authentication are deliberately not implemented. Background synchronization, AI synthesis, and team features also remain outside the MVP. Database, provider, and access credentials remain server-side.
 
 ## Documentation
 

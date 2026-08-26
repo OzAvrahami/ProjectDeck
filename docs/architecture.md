@@ -147,11 +147,11 @@ This requires straightforward timestamps, cached observations, and localized err
 
 ## 10. Auth and Security
 
-ProjectDeck v0.1 is single-user and has no authentication UI. It is intended for a private, controlled deployment rather than exposure as a public multi-user SaaS application.
+ProjectDeck v0.1 is single-user and uses a minimal private-access gate: one server-side password creates a signed, time-limited HttpOnly session cookie. It has no signup, accounts, organizations, roles, or multi-user identity model. Next.js `proxy.js` redirects unauthenticated requests before product routes render, and sensitive Server Actions also verify the session.
 
 Database credentials, GitHub tokens, Railway credentials, and future provider secrets remain server-side and are supplied through deployment environment variables. Sensitive values must not enter client bundles, browser storage, rendered HTML, or routine logs.
 
-Authentication and access control must be introduced before any public deployment that exposes personal project data. The no-auth v0.1 decision must not be carried into a public or multi-user release by default.
+The access gate is suitable only for a private single-user deployment. A public or multi-user product would still require full authentication, authorization, user isolation, and a different provider-credential model.
 
 ## 11. Testing
 
@@ -219,7 +219,7 @@ None of these responses should be built before its trigger exists.
 | GitHub connection | Server-side Personal Access Token |
 | First runtime integration | Railway |
 | Hosting | One Railway service |
-| Authentication | None in v0.1; private single-user deployment only |
+| Authentication | Minimal signed-cookie password gate; no user/account model |
 | Testing | Vitest for focused unit/integration checks; manual browser QA |
 | Background infrastructure | None in MVP |
 | Integration model | Modular in-process provider adapters, not plugins or microservices |

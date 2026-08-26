@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PORTFOLIO_NAVIGATION } from "../lib/projects/navigation";
+import { logoutAction } from "../app/login/actions.js";
 import { ThemeToggle } from "./theme-toggle.js";
 
 export function AppShell({ children, activeSection = null, workspaceName = null }) {
@@ -66,6 +67,14 @@ export function AppShell({ children, activeSection = null, workspaceName = null 
             >
               O
             </div>
+            <form action={logoutAction}>
+              <button
+                className="text-[11px] font-semibold text-muted hover:text-foreground"
+                type="submit"
+              >
+                Log out
+              </button>
+            </form>
           </div>
         </div>
       </header>

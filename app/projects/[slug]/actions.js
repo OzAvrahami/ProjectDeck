@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireAccessSession } from "../../../lib/access/server.js";
 import {
   createResource,
   getProjectWorkspaceBySlug,
@@ -13,6 +14,7 @@ function field(formData, name) {
 }
 
 export async function connectRailwayResourceAction(_previousState, formData) {
+  await requireAccessSession();
   const slug = field(formData, "slug");
   const label = field(formData, "label");
   const railwayProjectId = field(formData, "railwayProjectId");

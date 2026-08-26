@@ -105,6 +105,7 @@ Detailed provenance, source-authority rules, confidence scoring, and semantic cl
 
 ## Explicit MVP exclusions
 
+- signup, accounts, organizations, roles, permissions, or other multi-user authentication features; the private deployment uses only a minimal single-password access gate;
 - an automated local-machine observer or agent;
 - broad AI-conversation ingestion;
 - a generalized semantic claim engine;
