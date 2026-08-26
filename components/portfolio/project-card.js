@@ -16,7 +16,9 @@ export function ProjectCard({ card }) {
     ? `${card.lastWorkedLabel ? `${card.lastWorkedLabel} — ` : ""}${card.lastMeaningfulWorkSummary}`
     : card.lastWorkedLabel
       ? `Last worked ${card.lastWorkedLabel}`
-      : null;
+      : card.recentActivity
+        ? `Recent: ${card.recentActivity.message}`
+        : null;
   const metadata = [
     card.releaseSummary
       ? { key: "release", label: card.releaseSummary.label }

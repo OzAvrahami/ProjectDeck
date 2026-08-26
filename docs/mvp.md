@@ -1,6 +1,6 @@
 # MVP scope
 
-The MVP establishes ProjectDeck as a useful command center before adding broad automation. It defines product behavior, not an implementation architecture.
+The implemented MVP establishes ProjectDeck as a useful command center before adding broad automation. This document defines product behavior; technical boundaries are documented separately in [architecture.md](architecture.md).
 
 ## Portfolio / Overview
 
@@ -58,11 +58,11 @@ The other tabs provide focused access to their subject without reproducing the f
 
 Global views provide selective portfolio-wide visibility:
 
-- **Activity:** meaningful recent work across projects;
+- **Activity:** recent observed development activity across projects;
 - **Releases:** recent and relevant releases;
 - **Issues:** important open issues and items needing attention.
 
-These views should be useful summaries with direct routes to the relevant Project Workspace or source. They should not become unfiltered event feeds or duplicate issue-management tools.
+These views are useful read-only summaries with direct routes to the source. GitHub commits are labeled as observed repository activity rather than automatically described as meaningful progress, product completion, or user intent.
 
 ## Project and resource model
 
@@ -115,3 +115,9 @@ Detailed provenance, source-authority rules, confidence scoring, and semantic cl
 - enterprise collaboration, permissions, reporting, or commercial features unless later validated;
 - a notification-driven engagement system;
 - a power-user command system beyond sensible accessibility and keyboard navigation.
+
+## Implemented integration boundary
+
+The MVP reads repository identity, open Issues, published Releases, and a small recent commit window from connected GitHub repositories. Pull Requests are excluded from Issue counts. Project totals preserve complete, partial, and unavailable provider coverage.
+
+Railway services are associated explicitly with a Project or Component using provider IDs; ProjectDeck never links services by name alone. The Workspace shows the latest provider-native deployment state where a service is connected and `RAILWAY_TOKEN` is available. No source data is written back to GitHub or Railway.

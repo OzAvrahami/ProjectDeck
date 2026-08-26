@@ -10,11 +10,13 @@ The desktop application uses five primary destinations:
 
 - **Overview** — portfolio home and fast orientation;
 - **Projects** — complete searchable and filterable project list;
-- **Activity** — meaningful recent work across projects;
+- **Activity** — recent observed development activity across projects;
 - **Releases** — important releases across projects;
 - **Issues** — important open issues across projects.
 
 Global portfolio navigation is shown in normal portfolio views. When the user enters a Project Workspace, the header switches to a focused breadcrumb and back affordance in the form “All projects / ProjectName.” The workspace then uses local tabs rather than carrying the global portfolio navigation into the focused project context. The approved interactive design reference is authoritative for this transition.
+
+The implemented Activity destination is a calm chronological view of recent GitHub commits. It describes observed repository activity, not inferred progress, feature completion, or user intent.
 
 ## Overview
 
@@ -62,7 +64,7 @@ The main content contains:
 - **Where we are** — a concise current-state summary;
 - **Next up** — the user's planned next action;
 - **Needs attention** — selective intervention items;
-- **Recent work** — meaningful outcomes and changes.
+- **Recent work** — recent observed development activity, clearly distinguished from inferred progress.
 
 A secondary rail contains:
 
@@ -72,6 +74,8 @@ A secondary rail contains:
 - Quick links.
 
 The main column explains the project; the rail provides supporting facts and routes. On narrower layouts, the rail moves below the main content without changing the information priority.
+
+Where a Railway service is explicitly connected, the rail also presents its latest provider-native deployment state. Missing credentials or provider failure remain local to that runtime resource.
 
 ## Returning to work
 
@@ -119,6 +123,7 @@ Motion should clarify transitions and feedback, respect reduced-motion preferenc
 
 - No KPI-card overload or giant analytics charts by default.
 - No raw commit or event feed as the primary experience.
+- Activity remains a restrained, scoped source view rather than a progress score.
 - No badge soup; lifecycle and attention colors require plain-language meaning.
 - No excessive nesting of cards inside cards.
 - No source, timestamp, confidence, or provenance detail shown merely because it exists.

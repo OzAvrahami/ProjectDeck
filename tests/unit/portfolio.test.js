@@ -4,6 +4,7 @@ import {
   buildProjectCardViewModel,
   deriveProjectMark,
   selectContinueProject,
+  filterProjectCards,
   summarizePortfolio,
 } from "../../lib/projects/portfolio.js";
 
@@ -98,5 +99,43 @@ describe("Portfolio view model", () => {
       description: "1 of 2 repositories checked",
     });
     expect(card.releaseSummary).toEqual({ label: "Desktop v0.2.0" });
+  });
+
+  it("filters lifecycle and Needs Attention independently", () => {
+    const cards = [
+      buildProjectCardViewModel(project({ id: "active-attention", needsAttention: true })),
+      buildProjectCardViewModel(project({ id: "stable", lifecycleState: "stable" })),
+    ];
+
+    expect(
+      filterProjectCards(cards, {
+        lifecycle: "active",
+        attentionOnly: true,
+      }).map(({ id }) => id),
+    ).toEqual(["active-attention"]);
+    expect(filterProjectCards(cards, { lifecycle: "stable" })[0].needsAttention).toBe(false);
+  });
+
+  it("uses observed Activity only as explicitly labeled recent context", () => {
+    const card = buildProjectCardViewModel(
+      project({
+        githubSummary: {
+          activity: {
+            items: [
+              {
+                message: "Repair card hierarchy",
+                committedAt: "2026-08-25T10:00:00Z",
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(card.recentActivity).toEqual({
+      message: "Repair card hierarchy",
+      committedAt: "2026-08-25T10:00:00Z",
+    });
+    expect(card.lastWorkedLabel).toBeNull();
   });
 });

@@ -43,8 +43,9 @@ app/                     # Routes, layouts, Server Components, and route-local c
   globals.css            # Tailwind entry point and global styles
 components/              # Shared UI components
   portfolio/             # Portfolio and project-card UI
-  projects/              # Project Workspace UI
-  ui/                    # Small reusable interface primitives
+  projects/              # Projects collection UI
+  workspace/             # Project Workspace UI
+  github/                # GitHub observation UI
 lib/                     # Server-side application and integration modules
   github/                # GitHub adapter and mapping code
   railway/               # Railway adapter and mapping code
@@ -55,8 +56,6 @@ db/
   migrations/            # Versioned schema migrations
 tests/
   unit/
-  integration/
-  e2e/
 ```
 
 Folders should be introduced only when their first real use exists. Route-specific UI and logic may stay beside its route. Shared code should move into `components/` or `lib/` when reuse or a clear boundary is demonstrated; the application does not need a ceremonial repository/service/domain stack.
@@ -118,12 +117,12 @@ Ordinary application behavior does not require an internal REST API between the 
 
 The initial GitHub integration uses a Personal Access Token stored as a server-side environment secret.
 
-The MVP may read:
+The MVP reads:
 
 - repository identity and metadata;
 - relevant open issues;
 - releases;
-- meaningful recent repository activity.
+- a small recent commit window as observed repository activity.
 
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
@@ -131,7 +130,7 @@ The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a 
 
 ## 8. Railway Integration
 
-Railway is the first deployment and runtime provider. Its server-side adapter should fetch and normalize only the deployment, environment, and runtime information needed by ProjectDeck.
+Railway is the first deployment and runtime provider. Its server-side adapter fetches and normalizes only the latest deployment information needed by ProjectDeck. Service association is explicit: ProjectDeck stores Railway project, environment, and service IDs in the generic Resource external identity and never auto-links services by name.
 
 Provider-specific API details stay inside `lib/railway/`. Project-facing code consumes a small ProjectDeck-shaped result rather than Railway's raw response format. Future providers can follow the same local adapter pattern without changing the Project model or creating a generalized plugin framework.
 
@@ -157,9 +156,10 @@ Authentication and access control must be introduced before any public deploymen
 ## 11. Testing
 
 - Use Vitest for unit tests and server-side integration tests.
-- Use Playwright for key end-to-end flows such as viewing the portfolio, opening a Project Workspace, editing ProjectDeck-owned state, and handling a locally unavailable integration.
 - Keep GitHub and Railway adapters testable with fixtures, fakes, or mocked transport so routine tests do not require live provider calls.
 - Use live integration tests selectively when credentials and a controlled test resource are explicitly available.
+
+Browser routes and theme/responsive behavior are manually verified for the MVP; Playwright is not installed.
 
 Tests should emphasize product boundaries: lifecycle versus attention, Project versus resource, user-owned versus observed data, and local degradation when a provider fails.
 
@@ -220,7 +220,7 @@ None of these responses should be built before its trigger exists.
 | First runtime integration | Railway |
 | Hosting | One Railway service |
 | Authentication | None in v0.1; private single-user deployment only |
-| Testing | Vitest for unit/integration; Playwright for end-to-end |
+| Testing | Vitest for focused unit/integration checks; manual browser QA |
 | Background infrastructure | None in MVP |
 | Integration model | Modular in-process provider adapters, not plugins or microservices |
 | External project databases | Independent from and not used as ProjectDeck's own database |

@@ -16,14 +16,14 @@ describe("portfolio navigation", () => {
     ]);
   });
 
-  it("activates only implemented portfolio destinations", () => {
+  it("activates every completed MVP portfolio destination", () => {
     expect(
       PORTFOLIO_NAVIGATION.filter((item) => item.enabled).map(
         (item) => item.label,
       ),
-    ).toEqual(["Overview", "Releases", "Issues"]);
+    ).toEqual(["Overview", "Projects", "Activity", "Releases", "Issues"]);
     expect(
       PORTFOLIO_NAVIGATION.find((item) => item.label === "Activity"),
-    ).toMatchObject({ enabled: false, href: null });
+    ).toMatchObject({ enabled: true, href: "/activity" });
   });
 });

@@ -35,6 +35,7 @@ function observation(overrides = {}) {
     checkedAt: "2026-08-26T10:00:00Z",
     issues: { status: "success", items: [] },
     release: { status: "success", item: null },
+    activity: { status: "success", items: [] },
     ...overrides,
   };
 }
@@ -82,6 +83,25 @@ describe("Project GitHub aggregation", () => {
     });
   });
 
+  it("keeps Project-specific Issues and Releases scoped to that Project", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        issues: { status: "success", items: [issue(1)] },
+        release: { status: "success", item: release("v1.0.0") },
+      }),
+      observation({
+        projectId: "another-project",
+        issues: { status: "success", items: [issue(2)] },
+        release: { status: "success", item: release("v9.0.0") },
+      }),
+    ]);
+
+    expect(summary.issues.items.map(({ number }) => number)).toEqual([1]);
+    expect(summary.releases.items.map(({ tagName }) => tagName)).toEqual([
+      "v1.0.0",
+    ]);
+  });
+
   it("uses an unscoped compact Release only for one repository", () => {
     const summary = summarizeProjectGitHub(project(), [
       observation({ release: { status: "success", item: release("v0.2.0") } }),
@@ -119,5 +139,42 @@ describe("Project GitHub aggregation", () => {
       "v1.4.0",
     ]);
     expect(summary.releases.compactLabel).toBeNull();
+  });
+
+  it("orders multi-repository Activity and keeps partial coverage explicit", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        activity: {
+          status: "success",
+          items: [
+            {
+              id: "older",
+              sha: "older",
+              message: "Older",
+              committedAt: "2026-08-24T10:00:00Z",
+            },
+          ],
+        },
+      }),
+      observation({
+        resourceId: "website",
+        componentName: "Website",
+        scopeLabel: "Website",
+        activity: {
+          status: "unavailable",
+          error: { code: "rate_limit", message: "Rate limited" },
+        },
+      }),
+    ]);
+
+    expect(summary.activity).toMatchObject({
+      status: "partial",
+      checkedRepositoryCount: 1,
+      failedRepositoryCount: 1,
+    });
+    expect(summary.activity.items[0]).toMatchObject({
+      message: "Older",
+      scopeLabel: "Desktop",
+    });
   });
 });

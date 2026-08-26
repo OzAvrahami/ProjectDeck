@@ -1,14 +1,18 @@
 # Conceptual roadmap
 
-This roadmap describes product sequencing, not delivery commitments or a technical design. It may change after architecture and stack decisions are made.
+This roadmap describes product sequencing rather than delivery commitments. Phases 0–3 form the implemented single-user MVP; later work remains validation-driven.
 
 ## Phase 0 — Foundation
+
+Completed for MVP.
 
 - establish the canonical product documentation;
 - select the technical architecture and stack;
 - create the application skeleton and development baseline.
 
 ## Phase 1 — Local ProjectDeck MVP
+
+Completed for MVP, with Project state populated through the existing import/data paths rather than a broad administration interface.
 
 - project creation, editing, lifecycle state (Planning, Active, Stable, Paused, Completed, or Archived), a separate Needs Attention condition, and configuration;
 - portfolio Overview and responsive project-card grid;
@@ -20,16 +24,20 @@ This roadmap describes product sequencing, not delivery commitments or a technic
 
 ## Phase 2 — GitHub
 
+Completed for MVP as a read-only PAT integration. Recent commits are presented conservatively as observed development activity rather than synthesized progress.
+
 - connect repositories to Projects and Components;
 - show relevant issues and releases;
-- summarize meaningful recent repository activity;
+- present a small recent commit window as observed development activity;
 - link back to GitHub for source-system actions;
 - communicate last-checked and unavailable states honestly.
 
 ## Phase 3 — Runtime and deployment
 
+Completed for MVP with explicit Railway service association and latest deployment observation. Live use requires `RAILWAY_TOKEN`.
+
 - add the first deployment-provider integration;
-- show current deployment and health information where available;
+- show latest provider-native deployment state where available;
 - keep deployment state distinct from repository and release state;
 - degrade locally when the provider is unavailable.
 

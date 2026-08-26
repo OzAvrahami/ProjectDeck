@@ -6,29 +6,29 @@ Software projects rarely live in one tidy system. A single product may span seve
 
 ProjectDeck is intended to provide a clear portfolio view, then a focused workspace for each project. It should make it easy to see project lifecycle state, separate attention conditions, meaningful recent work, releases, issues, components, resources, and the next planned action. Returning to work after an interruption is an important part of that experience, but not the product's entire identity.
 
-## MVP direction
+## MVP capabilities
 
-The planned MVP includes:
+The current single-user MVP includes:
 
 - an Overview with a responsive project-card grid and “Continue where you left off” based primarily on the most recently used ProjectDeck project context;
 - searchable and filterable Projects;
 - project workspaces with Overview, Issues, Releases, Activity, and Docs;
-- cross-project Activity, Releases, and Issues views;
+- read-only GitHub repository discovery/import plus cross-project Activity, Releases, and Issues views;
+- explicit Railway service association with latest deployment state in Project Workspace;
 - project-level modeling of components, repositories, deployments, documentation, and links;
 - manually maintained project lifecycle state and next actions, followed by selective source integrations;
 - dark and light themes with project-specific accents.
 
-These capabilities are product plans, not implemented features.
-
 ## Current status
 
-ProjectDeck is in product and design preparation. The product definition, MVP boundary, UX direction, research summary, and conceptual roadmap are documented; application architecture, technology stack, and implementation have not yet been selected.
+ProjectDeck has a runnable Next.js 16 MVP backed by its own Neon database. It is intended for a private, single-user deployment: authentication, background synchronization, AI synthesis, and team features are deliberately not implemented. Provider credentials remain server-side through `DATABASE_URL`, `GITHUB_TOKEN`, and `RAILWAY_TOKEN`.
 
 ## Documentation
 
 - [Product definition](docs/product.md)
 - [MVP scope](docs/mvp.md)
 - [UX specification](docs/ux.md)
+- [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
 - [Competitive landscape](docs/research/competitive-landscape.md)
 

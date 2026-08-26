@@ -18,7 +18,7 @@ export function AppShell({ children, activeSection = null, workspaceName = null 
             </Link>
             {workspaceName ? (
               <div className="flex items-center gap-2.5 text-sm">
-                <Link className="text-muted hover:text-foreground" href="/">
+                <Link className="text-muted hover:text-foreground" href="/projects">
                   ← All projects
                 </Link>
                 <span className="text-muted/50">/</span>
