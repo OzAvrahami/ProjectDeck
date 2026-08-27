@@ -330,6 +330,22 @@ select:focus-visible {
     0 0 0 1px var(--project-border);
 }
 
+.project-card-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.project-card-open:focus-visible {
+  outline-offset: -3px;
+}
+
+.project-card-secondary-link {
+  position: relative;
+  z-index: 2;
+}
+
 .project-accent-line {
   position: absolute;
   inset: 0 0 auto;

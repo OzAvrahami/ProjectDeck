@@ -1,6 +1,26 @@
 import Link from "next/link";
 
+import { ADD_PROJECTS_HREF } from "../../lib/projects/navigation.js";
 import { ProjectCard, ProjectMark } from "./project-card.js";
+
+function PortfolioHeader({ summary }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-5">
+      <div>
+        <h1 className="text-[28px] font-semibold tracking-[-0.025em]">
+          Good to see you, Oz
+        </h1>
+        <p className="mt-2 font-mono text-[13px] text-muted">{summary}</p>
+      </div>
+      <Link
+        className="inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
+        href={ADD_PROJECTS_HREF}
+      >
+        + Add projects
+      </Link>
+    </div>
+  );
+}
 
 function ContinueCard({ card }) {
   return (
@@ -36,7 +56,7 @@ function ContinueCard({ card }) {
       </div>
       <Link
         className="project-accent-button"
-        href={`/projects/${card.slug}`}
+        href={card.workspaceHref}
       >
         Continue →
       </Link>
@@ -47,12 +67,7 @@ function ContinueCard({ card }) {
 export function PortfolioHome({ portfolio }) {
   return (
     <section className="mx-auto max-w-[1160px] px-5 py-10 sm:px-8 sm:py-12 lg:pb-24">
-      <h1 className="text-[28px] font-semibold tracking-[-0.025em]">
-        Good to see you, Oz
-      </h1>
-      <p className="mt-2 font-mono text-[13px] text-muted">
-        {portfolio.summary.label}
-      </p>
+      <PortfolioHeader summary={portfolio.summary.label} />
 
       {portfolio.continueCard ? (
         <div className="mt-8">
@@ -76,10 +91,7 @@ export function PortfolioHome({ portfolio }) {
 export function PortfolioEmptyState() {
   return (
     <section className="mx-auto max-w-[1160px] px-5 py-10 sm:px-8 sm:py-12">
-      <h1 className="text-[28px] font-semibold tracking-[-0.025em]">
-        Good to see you, Oz
-      </h1>
-      <p className="mt-2 font-mono text-[13px] text-muted">0 projects</p>
+      <PortfolioHeader summary="0 projects" />
       <div className="mt-10 max-w-2xl rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-[var(--card-shadow)] sm:px-10">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-background font-mono text-sm font-semibold text-muted">
           PD
@@ -89,12 +101,6 @@ export function PortfolioEmptyState() {
           Import repositories from GitHub, then group them into the products
           you actually manage.
         </p>
-        <Link
-          className="mt-7 inline-flex rounded-lg bg-foreground px-5 py-3 text-sm font-semibold text-background"
-          href="/setup/github"
-        >
-          Import from GitHub →
-        </Link>
       </div>
     </section>
   );

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Fragment } from "react";
 
+import { buildProjectNextPresentation } from "../../lib/projects/portfolio.js";
+
 export function ProjectMark({ card, size = "card" }) {
   const sizeClass = size === "continue" ? "project-mark-large" : "project-mark";
 
@@ -12,6 +14,7 @@ export function ProjectMark({ card, size = "card" }) {
 }
 
 export function ProjectCard({ card }) {
+  const next = buildProjectNextPresentation(card);
   const lastWorkText = card.lastMeaningfulWorkSummary
     ? `${card.lastWorkedLabel ? `${card.lastWorkedLabel} — ` : ""}${card.lastMeaningfulWorkSummary}`
     : card.lastWorkedLabel
@@ -39,12 +42,17 @@ export function ProjectCard({ card }) {
   ].filter(Boolean);
 
   return (
-    <Link
+    <article
       className="project-card group"
-      href={`/projects/${card.slug}`}
       style={{ "--project-hue": card.accentHue }}
-      aria-label={`Open ${card.name}`}
     >
+      <Link
+        className="project-card-open"
+        href={card.workspaceHref}
+        aria-label={`Open ${card.name}`}
+      >
+        <span className="sr-only">Open {card.name}</span>
+      </Link>
       <span className="project-accent-line" aria-hidden="true" />
 
       <div className="flex items-start justify-between gap-3">
@@ -84,14 +92,22 @@ export function ProjectCard({ card }) {
         </div>
         <p
           className={`text-[15.5px] font-semibold leading-[1.45] ${
-            card.nextAction ? "text-foreground" : "text-muted"
+            next.isSet ? "text-foreground" : "text-muted"
           }`}
         >
-          {card.nextAction ?? "No next action set"}
-          {card.nextAction ? (
+          {next.label}
+          {next.isSet ? (
             <span className="project-accent-text"> →</span>
           ) : null}
         </p>
+        {!next.isSet ? (
+          <Link
+            className="project-card-secondary-link project-accent-text mt-1.5 inline-flex text-xs font-semibold hover:underline"
+            href={next.editHref}
+          >
+            Set next →
+          </Link>
+        ) : null}
       </div>
 
       {metadata.length > 0 ? (
@@ -114,6 +130,6 @@ export function ProjectCard({ card }) {
           {lastWorkText}
         </p>
       ) : null}
-    </Link>
+    </article>
   );
 }

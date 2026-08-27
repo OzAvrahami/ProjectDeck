@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { ProjectCard } from "../portfolio/project-card.js";
+import { ADD_PROJECTS_HREF } from "../../lib/projects/navigation.js";
 import { filterProjectCards } from "../../lib/projects/portfolio.js";
 
 const LIFECYCLES = [
@@ -37,7 +38,7 @@ export function ProjectsView({ cards }) {
           <h1 className="text-[28px] font-semibold tracking-[-0.025em]">Projects</h1>
           <Link
             className="inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
-            href="/setup/github"
+            href={ADD_PROJECTS_HREF}
           >
             + Add projects
           </Link>
@@ -47,7 +48,7 @@ export function ProjectsView({ cards }) {
           <p className="mt-2 text-sm leading-6 text-subtle">
             Import repositories from GitHub to create your first Project candidates.
           </p>
-          <Link className="mt-6 inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background" href="/setup/github">
+          <Link className="mt-6 inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background" href={ADD_PROJECTS_HREF}>
             + Add projects from GitHub
           </Link>
         </div>
@@ -70,7 +71,7 @@ export function ProjectsView({ cards }) {
           </p>
           <Link
             className="inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
-            href="/setup/github"
+            href={ADD_PROJECTS_HREF}
           >
             + Add projects
           </Link>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildProjectCardViewModel,
+  buildProjectNextPresentation,
   deriveProjectMark,
   selectContinueProject,
   filterProjectCards,
@@ -70,12 +71,32 @@ describe("Portfolio view model", () => {
     const card = buildProjectCardViewModel(project(), new Date("2026-08-25"));
 
     expect(card.nextAction).toBeNull();
+    expect(card.editHref).toBe("/projects/limitpact/edit");
     expect(card.components).toEqual([]);
     expect(card.hasLastWork).toBe(false);
     expect(card.issueSummary).toBeNull();
     expect(card.releaseSummary).toBeNull();
     expect(card).not.toHaveProperty("version");
     expect(card).not.toHaveProperty("releaseState");
+    expect(buildProjectNextPresentation(card)).toEqual({
+      isSet: false,
+      label: "No next action set",
+      editHref: "/projects/limitpact/edit",
+    });
+  });
+
+  it("keeps a populated Next action as explicit ProjectDeck-owned intent", () => {
+    const card = buildProjectCardViewModel(
+      project({ nextAction: "  Review notification preferences  " }),
+    );
+
+    expect(card.nextAction).toBe("Review notification preferences");
+    expect(card.editHref).toBe("/projects/limitpact/edit");
+    expect(buildProjectNextPresentation(card)).toEqual({
+      isSet: true,
+      label: "Review notification preferences",
+      editHref: null,
+    });
   });
 
   it("uses only scoped GitHub summaries supplied by the observation layer", () => {
