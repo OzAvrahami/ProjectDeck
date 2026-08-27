@@ -32,6 +32,7 @@ ProjectDeck has a runnable Next.js 16 MVP backed by its own Neon database. It is
 - [UX specification](docs/ux.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
+- [GitHub development standard](docs/github-development-standard.md)
 - [Competitive landscape](docs/research/competitive-landscape.md)
 
 The approved interactive design reference is [ProjectDeck.dc.html](design-reference/projectdeck-v0.1/ProjectDeck.dc.html). It is the visual source of truth for the current product direction.

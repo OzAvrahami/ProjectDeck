@@ -1,0 +1,54 @@
+name: Bug
+description: Report incorrect existing behavior
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the incorrect behavior and its impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. Go to ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Explain what should have happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or evidence
+      description: Add screenshots, logs, or other evidence when relevant. Remove secrets and personal data first.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and context
+      description: Note the browser, deployment, project, integration, or other context needed to investigate.
+    validations:
+      required: true
+
+  - type: textarea
+    id: possible-cause
+    attributes:
+      label: Possible cause
+      description: Optionally share a suspected cause or useful implementation lead.
+
