@@ -98,6 +98,8 @@ describe("route protection decisions", () => {
     expect(isPublicAccessPath("/login")).toBe(true);
     expect(isPublicAccessPath("/")).toBe(false);
     expect(isPublicAccessPath("/setup/github")).toBe(false);
+    expect(isPublicAccessPath("/settings")).toBe(false);
+    expect(isPublicAccessPath("/projects/limitpact/edit")).toBe(false);
   });
 
   it("requires a valid configured session for protected routes", () => {

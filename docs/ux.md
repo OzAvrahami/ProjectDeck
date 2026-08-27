@@ -16,6 +16,8 @@ The desktop application uses five primary destinations:
 
 Global portfolio navigation is shown in normal portfolio views. When the user enters a Project Workspace, the header switches to a focused breadcrumb and back affordance in the form “All projects / ProjectName.” The workspace then uses local tabs rather than carrying the global portfolio navigation into the focused project context. The approved interactive design reference is authoritative for this transition.
 
+The compact avatar menu contains only Settings and Log out. Settings is a restrained integration-status and navigation surface, not a general account or administration dashboard.
+
 The implemented Activity destination is a calm chronological view of recent GitHub commits. It describes observed repository activity, not inferred progress, feature completion, or user intent.
 
 ## Overview
@@ -45,7 +47,7 @@ Selecting a card opens its Project Workspace. Links or controls inside a card mu
 
 ## Projects
 
-Projects provides the full portfolio with search and lifecycle-state filtering. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.
+Projects provides the full portfolio with search, lifecycle-state filtering, an independent Needs Attention filter, and the primary “Add projects” entry point into GitHub import. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.
 
 ## Project Workspace
 
@@ -75,7 +77,11 @@ A secondary rail contains:
 
 The main column explains the project; the rail provides supporting facts and routes. On narrower layouts, the rail moves below the main content without changing the information priority.
 
+A secondary Edit Project action opens a focused form for ProjectDeck-owned context. Display-name changes keep the existing project URL stable. Lifecycle and Needs Attention use separate controls; clearing Needs Attention removes its summary from current presentation. Provider observations are visible but cannot be edited through this form.
+
 Where a Railway service is explicitly connected, the rail also presents its latest provider-native deployment state. Missing credentials or provider failure remain local to that runtime resource.
+
+GitHub setup is reachable through Projects and Settings and provides clear routes back to both. Railway management stays scoped to the relevant Project Workspace so Settings does not become a global integration console.
 
 ## Returning to work
 

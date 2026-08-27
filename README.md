@@ -13,6 +13,8 @@ The current single-user MVP includes:
 - an Overview with a responsive project-card grid and “Continue where you left off” based primarily on the most recently used ProjectDeck project context;
 - searchable and filterable Projects;
 - project workspaces with Overview, Issues, Releases, Activity, and Docs;
+- editing for ProjectDeck-owned project details, including lifecycle, separate attention context, next action, and accent;
+- a small Settings surface for integration status and clear GitHub/Railway management paths;
 - read-only GitHub repository discovery/import plus cross-project Activity, Releases, and Issues views;
 - explicit Railway service association with latest deployment state in Project Workspace;
 - project-level modeling of components, repositories, deployments, documentation, and links;

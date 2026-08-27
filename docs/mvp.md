@@ -27,6 +27,8 @@ The Projects view provides the complete project list with:
 
 - text search;
 - lifecycle-state filtering;
+- an independent Needs Attention filter;
+- a clear Add projects action that opens the GitHub repository import flow;
 - clear access to each Project Workspace.
 
 It is a navigation and portfolio-management surface, not a spreadsheet-style project administration screen.
@@ -53,6 +55,12 @@ The project Overview contains:
 - **Quick links:** important repositories, deployments, documents, and other resources.
 
 The other tabs provide focused access to their subject without reproducing the full experience of the source system.
+
+ProjectDeck-owned fields can be edited from the Workspace: display name, tagline, lifecycle, the independent Needs Attention condition and summary, next action, and a restrained project accent. Changing a display name keeps the existing slug stable. GitHub Issues, Releases, activity, repository metadata, and Railway deployment observations remain read-only.
+
+## Settings and integration access
+
+The header account menu provides access to a small Settings page and logout. Settings shows only non-secret provider configuration state and connected Resource counts. GitHub repository management returns to the existing scan/import flow; Railway associations remain explicitly managed from each Project Workspace rather than from a global administration console.
 
 ## Cross-project views
 

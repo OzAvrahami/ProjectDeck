@@ -17,6 +17,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
   const activeTab = WORKSPACE_TABS.some(({ id }) => id === requestedTab)
     ? requestedTab
     : "overview";
+  const projectUpdated = query?.updated === "1";
   let project;
 
   try {
@@ -53,6 +54,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
         card={card}
         railwaySummary={railwaySummary}
         activeTab={activeTab}
+        projectUpdated={projectUpdated}
       />
     </AppShell>
   );

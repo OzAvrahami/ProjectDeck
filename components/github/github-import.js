@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { importGitHubRepositoriesAction } from "../../app/setup/github/actions.js";
@@ -213,19 +214,42 @@ export function GitHubImport({
           Repositories connected
         </h1>
         <p className="mt-4 text-subtle">{actionState.message}</p>
-        <button
-          className="mt-8 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-accent"
-          type="button"
-          onClick={() => window.location.reload()}
-        >
-          Scan GitHub again
-        </button>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
+            href="/projects"
+          >
+            View Projects →
+          </Link>
+          <button
+            className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-accent"
+            type="button"
+            onClick={() => window.location.reload()}
+          >
+            Scan GitHub again
+          </button>
+          <Link
+            className="rounded-lg px-3 py-2.5 text-sm font-semibold text-subtle hover:text-foreground"
+            href="/settings"
+          >
+            Back to Settings
+          </Link>
+        </div>
       </section>
     );
   }
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
+      <nav className="mb-7 flex flex-wrap items-center gap-3 text-xs font-semibold text-muted" aria-label="GitHub setup context">
+        <Link className="hover:text-foreground" href="/settings">
+          ← Settings
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link className="hover:text-foreground" href="/projects">
+          Projects
+        </Link>
+      </nav>
       <div className="flex flex-wrap items-start justify-between gap-5 border-b border-line pb-8">
         <div className="max-w-2xl">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">

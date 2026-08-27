@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { PORTFOLIO_NAVIGATION } from "../lib/projects/navigation";
-import { logoutAction } from "../app/login/actions.js";
+import { AccountMenu } from "./account-menu.js";
 import { ThemeToggle } from "./theme-toggle.js";
 
 export function AppShell({ children, activeSection = null, workspaceName = null }) {
@@ -61,20 +61,7 @@ export function AppShell({ children, activeSection = null, workspaceName = null 
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-avatar text-[13px] font-semibold text-subtle"
-              aria-label="Current user"
-            >
-              O
-            </div>
-            <form action={logoutAction}>
-              <button
-                className="text-[11px] font-semibold text-muted hover:text-foreground"
-                type="submit"
-              >
-                Log out
-              </button>
-            </form>
+            <AccountMenu />
           </div>
         </div>
       </header>

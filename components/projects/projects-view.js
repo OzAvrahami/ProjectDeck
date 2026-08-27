@@ -33,14 +33,22 @@ export function ProjectsView({ cards }) {
   if (cards.length === 0) {
     return (
       <section className="mx-auto max-w-[1160px] px-5 py-10 sm:px-8 sm:py-12">
-        <h1 className="text-[28px] font-semibold tracking-[-0.025em]">Projects</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-[28px] font-semibold tracking-[-0.025em]">Projects</h1>
+          <Link
+            className="inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
+            href="/setup/github"
+          >
+            + Add projects
+          </Link>
+        </div>
         <div className="mt-8 max-w-2xl rounded-xl border border-line bg-surface px-6 py-10 text-center">
           <p className="font-semibold">No Projects yet</p>
           <p className="mt-2 text-sm leading-6 text-subtle">
             Import repositories from GitHub to create your first Project candidates.
           </p>
           <Link className="mt-6 inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background" href="/setup/github">
-            Import from GitHub →
+            + Add projects from GitHub
           </Link>
         </div>
       </section>
@@ -56,9 +64,17 @@ export function ProjectsView({ cards }) {
             Your complete ProjectDeck portfolio.
           </p>
         </div>
-        <p className="font-mono text-xs text-muted">
-          {visibleCards.length} of {cards.length}
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="font-mono text-xs text-muted">
+            {visibleCards.length} of {cards.length}
+          </p>
+          <Link
+            className="inline-flex rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-85"
+            href="/setup/github"
+          >
+            + Add projects
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8 rounded-xl border border-line bg-surface p-4 shadow-[var(--card-shadow)]">

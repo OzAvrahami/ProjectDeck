@@ -266,7 +266,13 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
   );
 }
 
-export function ProjectWorkspace({ project, card, railwaySummary, activeTab }) {
+export function ProjectWorkspace({
+  project,
+  card,
+  railwaySummary,
+  activeTab,
+  projectUpdated = false,
+}) {
   const content = {
     overview: <WorkspaceOverview project={project} card={card} railwaySummary={railwaySummary} />,
     issues: <WorkspaceIssues project={project} />,
@@ -277,17 +283,34 @@ export function ProjectWorkspace({ project, card, railwaySummary, activeTab }) {
 
   return (
     <section className="workspace-root mx-auto max-w-[1060px] px-5 py-9 sm:px-8 sm:py-11" style={{ "--project-hue": card.accentHue }}>
-      <div className="flex items-center gap-4">
-        <ProjectMark card={card} size="continue" />
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-[-0.025em]">{card.name}</h1>
-            <span className="flex items-center gap-1.5 text-xs text-subtle"><span className={`lifecycle-dot lifecycle-${card.lifecycleState}`} aria-hidden="true" />{card.lifecycleLabel}</span>
-            {card.needsAttention ? <span className="attention-pill">Needs Attention</span> : null}
+      <div className="flex flex-wrap items-center justify-between gap-5">
+        <div className="flex min-w-0 items-center gap-4">
+          <ProjectMark card={card} size="continue" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-[-0.025em]">{card.name}</h1>
+              <span className="flex items-center gap-1.5 text-xs text-subtle"><span className={`lifecycle-dot lifecycle-${card.lifecycleState}`} aria-hidden="true" />{card.lifecycleLabel}</span>
+              {card.needsAttention ? <span className="attention-pill">Needs Attention</span> : null}
+            </div>
+            {card.tagline ? <p className="mt-1.5 text-sm text-subtle">{card.tagline}</p> : null}
           </div>
-          {card.tagline ? <p className="mt-1.5 text-sm text-subtle">{card.tagline}</p> : null}
         </div>
+        <Link
+          className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-[var(--project-color)]"
+          href={`/projects/${card.slug}/edit`}
+        >
+          Edit Project
+        </Link>
       </div>
+
+      {projectUpdated ? (
+        <p
+          className="mt-6 rounded-lg border border-line bg-surface px-4 py-3 text-sm font-medium text-ready"
+          role="status"
+        >
+          Project details updated.
+        </p>
+      ) : null}
 
       <nav className="mt-8 border-b border-line" aria-label={`${card.name} workspace`}>
         <ul className="flex gap-1 overflow-x-auto">
