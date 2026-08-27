@@ -18,6 +18,13 @@ Backlog → Ready → In Progress → Verify → Done
 
 New Issues enter Backlog. Closing an Issue moves it to Done, while reopening an Issue moves it to Ready. Transitions from Ready through Verify remain deliberate, manual decisions.
 
+### Default Project Views
+
+- `Development` — Board grouped by Status.
+- `All work` — Table for inspection and editing.
+- Preferred card fields are Priority, Labels, and Assignees.
+- Do not proliferate views without a demonstrated need.
+
 ## Priority
 
 Priority is a GitHub Project single-select field, ordered from highest to lowest:
@@ -79,4 +86,3 @@ A GitHub Release represents a meaningful published version and is authoritative 
 - Project-specific operational workflows remain project-specific.
 
 These conventions let ProjectDeck later interpret type, scope, workflow status, priority, releases, recent commits, and Railway runtime state without conflating their separate meanings. That inference is not part of this pilot.
-
