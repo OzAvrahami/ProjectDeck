@@ -19,9 +19,22 @@ export const PROJECT_LIFECYCLE_STATES = [
   "archived",
 ];
 
+export const PROJECT_PHASE_OVERRIDES = [
+  "planning",
+  "development",
+  "maintenance",
+  "paused",
+  "archived",
+];
+
 export const projectLifecycle = pgEnum(
   "project_lifecycle",
   PROJECT_LIFECYCLE_STATES,
+);
+
+export const projectPhaseOverride = pgEnum(
+  "project_phase_override",
+  PROJECT_PHASE_OVERRIDES,
 );
 
 export const projects = pgTable(
@@ -34,6 +47,9 @@ export const projects = pgTable(
     lifecycleState: projectLifecycle("lifecycle_state")
       .default("planning")
       .notNull(),
+    // Legacy lifecycle data is retained for backward compatibility. New UI
+    // reads synthesized phase and uses this nullable override only on request.
+    phaseOverride: projectPhaseOverride("phase_override"),
     needsAttention: boolean("needs_attention").default(false).notNull(),
     attentionSummary: text("attention_summary"),
     nextAction: text("next_action"),

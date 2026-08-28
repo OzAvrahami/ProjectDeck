@@ -14,11 +14,11 @@ Completed for MVP.
 
 Completed for MVP, with Project state populated through the existing import/data paths rather than a broad administration interface.
 
-- project creation, editing, lifecycle state (Planning, Active, Stable, Paused, Completed, or Archived), a separate Needs Attention condition, and configuration;
+- project creation, editing, automatic Project Phase with manual override, a separate Needs Attention condition, and configuration;
 - portfolio Overview and responsive project-card grid;
 - searchable and filterable Projects view;
 - Project Workspace with Overview, Issues, Releases, Activity, and Docs structure;
-- manually entered project lifecycle state, next action, components, and resources;
+- synthesized Project Phase, manually entered next action, components, and resources;
 - “Continue where you left off” based primarily on the most recently used or worked ProjectDeck project context;
 - dark and light themes.
 

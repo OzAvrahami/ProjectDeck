@@ -61,11 +61,11 @@
   --attention: oklch(66% 0.19 25);
   --attention-background: oklch(66% 0.19 25 / 0.14);
   --status-planning: oklch(72% 0.02 260);
-  --status-active: oklch(74% 0.15 150);
-  --status-stable: oklch(66% 0.09 150);
+  --status-development: oklch(74% 0.15 150);
+  --status-maintenance: oklch(72% 0.1 258);
   --status-paused: oklch(52% 0.01 260);
-  --status-completed: oklch(72% 0.1 258);
   --status-archived: oklch(48% 0.01 260);
+  --status-unknown: oklch(62% 0.03 285);
   --card-shadow: none;
   --project-lightness: 72%;
   --project-chroma: 0.14;
@@ -89,11 +89,11 @@
     --attention: oklch(66% 0.19 25);
     --attention-background: oklch(66% 0.19 25 / 0.14);
     --status-planning: oklch(72% 0.02 260);
-    --status-active: oklch(74% 0.15 150);
-    --status-stable: oklch(66% 0.09 150);
+    --status-development: oklch(74% 0.15 150);
+    --status-maintenance: oklch(72% 0.1 258);
     --status-paused: oklch(52% 0.01 260);
-    --status-completed: oklch(72% 0.1 258);
     --status-archived: oklch(48% 0.01 260);
+    --status-unknown: oklch(62% 0.03 285);
     --card-shadow: none;
     --project-lightness: 72%;
     --project-chroma: 0.14;
@@ -420,7 +420,7 @@ select:focus-visible {
   box-shadow: 0 0 0 1px var(--project-border);
 }
 
-.lifecycle-dot {
+.phase-dot {
   width: 0.375rem;
   height: 0.375rem;
   flex-shrink: 0;
@@ -428,24 +428,24 @@ select:focus-visible {
   background: var(--status-planning);
 }
 
-.lifecycle-active {
-  background: var(--status-active);
+.phase-development {
+  background: var(--status-development);
 }
 
-.lifecycle-stable {
-  background: var(--status-stable);
+.phase-maintenance {
+  background: var(--status-maintenance);
 }
 
-.lifecycle-paused {
+.phase-paused {
   background: var(--status-paused);
 }
 
-.lifecycle-completed {
-  background: var(--status-completed);
+.phase-archived {
+  background: var(--status-archived);
 }
 
-.lifecycle-archived {
-  background: var(--status-archived);
+.phase-unknown {
+  background: var(--status-unknown);
 }
 
 .attention-pill {

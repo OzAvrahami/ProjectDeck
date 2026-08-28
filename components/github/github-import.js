@@ -645,7 +645,7 @@ export function GitHubImport({
                       </label>
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <p className="text-xs leading-5 text-muted">
-                          Existing lifecycle, attention, description, and Next
+                          Existing phase override, attention, description, and Next
                           action will not be changed.
                         </p>
                         <button

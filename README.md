@@ -4,7 +4,7 @@ ProjectDeck is a personal developer command center for managing and understandin
 
 Software projects rarely live in one tidy system. A single product may span several repositories, deployments, issue queues, documents, and useful links. When work is spread across many projects, understanding where each one stands—and what to do next—takes repeated reconstruction.
 
-ProjectDeck is intended to provide a clear portfolio view, then a focused workspace for each project. It should make it easy to see project lifecycle state, separate attention conditions, meaningful recent work, releases, issues, components, resources, and the next planned action. Returning to work after an interruption is an important part of that experience, but not the product's entire identity.
+ProjectDeck is intended to provide a clear portfolio view, then a focused workspace for each project. It should make it easy to see an automatically synthesized Project Phase, separate attention conditions, meaningful recent work, releases, issues, components, resources, and the next planned action. Returning to work after an interruption is an important part of that experience, but not the product's entire identity.
 
 ## MVP capabilities
 
@@ -13,12 +13,12 @@ The current single-user MVP includes:
 - an Overview with a responsive project-card grid and “Continue where you left off” based primarily on the most recently used ProjectDeck project context;
 - searchable and filterable Projects;
 - project workspaces with Overview, Issues, Releases, Activity, and Docs;
-- editing for ProjectDeck-owned project details, including lifecycle, separate attention context, next action, and accent;
+- editing for ProjectDeck-owned project details, including a manual Phase override, separate attention context, next action, and accent;
 - a small Settings surface for integration status and clear GitHub/Railway management paths;
 - read-only GitHub repository discovery/import plus cross-project Activity, Releases, and Issues views;
 - explicit Railway service association with latest deployment state in Project Workspace;
 - project-level modeling of components, repositories, deployments, documentation, and links;
-- manually maintained project lifecycle state and next actions, followed by selective source integrations;
+- deterministic Project Phase synthesis from read-only GitHub evidence, with an explicit manual override, plus manually maintained next actions;
 - dark and light themes with project-specific accents.
 
 ## Current status

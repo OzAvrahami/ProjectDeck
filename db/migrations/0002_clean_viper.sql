@@ -1,0 +1,2 @@
+CREATE TYPE "public"."project_phase_override" AS ENUM('planning', 'development', 'maintenance', 'paused', 'archived');--> statement-breakpoint
+ALTER TABLE "projects" ADD COLUMN "phase_override" "project_phase_override";

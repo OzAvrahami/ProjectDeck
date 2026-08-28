@@ -68,7 +68,7 @@ The codebase uses JavaScript rather than TypeScript.
 
 ProjectDeck owns information the user creates or controls, including:
 
-- Project identity, description, and lifecycle state;
+- Project identity, description, and an optional manual Project Phase override;
 - the separate Needs Attention condition and its ProjectDeck context;
 - the user's next action;
 - project accent and display preferences;
@@ -82,6 +82,7 @@ ProjectDeck owns information the user creates or controls, including:
 External providers remain authoritative for information ProjectDeck observes, including:
 
 - GitHub repository metadata, issues, releases, and repository activity;
+- GitHub Projects v2 workflow fields and Issue items used as read-only Phase evidence;
 - Railway deployments and runtime state;
 - future Supabase or Neon metadata about monitored projects;
 - data from other future project resources.
@@ -107,7 +108,7 @@ Drizzle is used because it provides a lightweight schema, migration, and query l
 
 - Use Server Components for data-backed pages and read-heavy composition where appropriate.
 - Use Client Components only where browser interaction or client state requires them.
-- Use Server Actions for ordinary internal mutations such as creating a Project, updating lifecycle state, changing the next action, or editing resources when that keeps the flow simple.
+- Use Server Actions for ordinary internal mutations such as creating a Project, setting or clearing a manual Phase override, changing the next action, or editing resources when that keeps the flow simple.
 - Use Route Handlers when an HTTP endpoint is genuinely useful, such as a provider callback, webhook, export, or endpoint consumed outside the normal application render flow.
 - Keep database access, provider tokens, and secret-bearing integration calls in server-only modules.
 
@@ -123,6 +124,11 @@ The MVP reads:
 - relevant open issues;
 - releases;
 - a small recent commit window as observed repository activity.
+- user-owned GitHub Projects v2, their linked repositories, and Standard v1 Status/Priority Issue signals through a separate read-only `GITHUB_PROJECTS_TOKEN`.
+
+Project resolution uses connected repository identity. Exactly one GitHub Project must match the complete connected repository set; zero matches remain unresolved and multiple plausible matches remain ambiguous. Project name matching is not an authority. This supports both one-repository projects and products whose components span several repositories.
+
+A deterministic in-process phase service combines the resolved GitHub Project workflow with existing Release and activity observations. It returns the Phase, its source (`override`, `inferred`, or `unknown`), a concise reason, and bounded evidence. The legacy `lifecycle_state` column remains temporarily for backward compatibility, but is not the displayed Phase source. New manual control is stored in nullable `phase_override`; null means Automatic.
 
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
@@ -142,6 +148,8 @@ Provider-specific API details stay inside `lib/railway/`. Project-facing code co
 - Never represent unavailable or stale provider data as current.
 - Never infer local branches, uncommitted changes, or workspace cleanliness from remote GitHub state.
 - Do not let one provider failure break the portfolio or unrelated project information.
+- Return Unknown instead of Planning or Maintenance when required Phase evidence is unavailable, partial, ambiguous, nonstandard, or contradictory.
+- Keep Project Phase independent from Railway deployment/runtime Health; a failed deployment never changes Phase by itself.
 
 This requires straightforward timestamps, cached observations, and localized error handling—not a semantic-claim, authority, or confidence-governance engine.
 
@@ -161,7 +169,7 @@ The access gate is suitable only for a private single-user deployment. A public 
 
 Browser routes and theme/responsive behavior are manually verified for the MVP; Playwright is not installed.
 
-Tests should emphasize product boundaries: lifecycle versus attention, Project versus resource, user-owned versus observed data, and local degradation when a provider fails.
+Tests should emphasize product boundaries: Phase versus attention and runtime Health, automatic inference versus manual override, Project versus resource, user-owned versus observed data, and local degradation when a provider fails.
 
 ## 12. Deployment
 
@@ -216,7 +224,7 @@ None of these responses should be built before its trigger exists.
 | ProjectDeck database | Dedicated Neon PostgreSQL database |
 | Database layer | Drizzle for schema, migrations, and queries |
 | Server API boundary | Server Components and Server Actions by default; Route Handlers only when useful |
-| GitHub connection | Server-side Personal Access Token |
+| GitHub connection | Server-side repository PAT plus a read-only Projects v2 PAT |
 | First runtime integration | Railway |
 | Hosting | One Railway service |
 | Authentication | Minimal signed-cookie password gate; no user/account model |

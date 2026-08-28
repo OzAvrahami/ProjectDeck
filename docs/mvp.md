@@ -9,7 +9,7 @@ The Overview is the home screen. It should show the portfolio as a prominent res
 Each project card should communicate, where applicable:
 
 - project identity and project-specific accent;
-- lifecycle state and short description;
+- synthesized Project Phase and short description;
 - current version or milestone;
 - next planned action;
 - open issue count;
@@ -26,7 +26,7 @@ Cards should remain easy to scan. Missing optional data should not produce empty
 The Projects view provides the complete project list with:
 
 - text search;
-- lifecycle-state filtering;
+- Project Phase filtering, including Unknown;
 - an independent Needs Attention filter;
 - a clear Add projects action that opens the GitHub repository import flow;
 - clear access to each Project Workspace.
@@ -56,7 +56,7 @@ The project Overview contains:
 
 The other tabs provide focused access to their subject without reproducing the full experience of the source system.
 
-ProjectDeck-owned fields can be edited from the Workspace: display name, tagline, lifecycle, the independent Needs Attention condition and summary, next action, and a restrained project accent. Changing a display name keeps the existing slug stable. GitHub Issues, Releases, activity, repository metadata, and Railway deployment observations remain read-only.
+ProjectDeck-owned fields can be edited from the Workspace: display name, tagline, an optional manual Project Phase override, the independent Needs Attention condition and summary, next action, and a restrained project accent. Automatic is the default Phase mode. Changing a display name keeps the existing slug stable. GitHub Project workflow data, Issues, Releases, activity, repository metadata, and Railway deployment observations remain read-only.
 
 ## Settings and integration access
 
@@ -81,8 +81,9 @@ The MVP must be able to represent these product concepts without prescribing dat
 - **Repository/resource association:** a repository or external resource related to a Project or Component;
 - **Deployment/runtime resource:** a deployed environment or service whose current state may differ from repository or release state;
 - **Documentation resource:** a document or documentation destination;
-- **Lifecycle state:** the project's current lifecycle description: Planning, Active, Stable, Paused, Completed, or Archived;
-- **Attention condition:** whether something currently Needs Attention, independent of lifecycle state—a project may be Active and also Need Attention;
+- **Project Phase:** Automatic synthesis may return Planning, Development, Maintenance, or Unknown; Paused and Archived require a manual override in v1;
+- **Attention condition:** whether something currently Needs Attention, independent of Phase—a project may be in Development and also Need Attention;
+- **Runtime Health:** observed deployment/runtime state, independent of Phase and never used alone to change it;
 - **Next action:** the explicit action the user intends to advance next.
 
 A resource may support more than one component where that reflects reality. Project-level orientation remains primary even when details come from several resources.

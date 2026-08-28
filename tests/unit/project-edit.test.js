@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PROJECT_LIFECYCLE_STATES } from "../../db/schema.js";
+import { PROJECT_PHASE_OVERRIDES } from "../../db/schema.js";
 import {
   PROJECT_ACCENT_OPTIONS,
   PROJECT_EDIT_LIMITS,
@@ -11,7 +11,7 @@ function validInput(overrides = {}) {
   return {
     name: "  LimitPact  ",
     tagline: "  Trading discipline platform  ",
-    lifecycleState: "active",
+    phaseOverride: null,
     needsAttention: false,
     attentionSummary: "Old hidden attention text",
     nextAction: "  Review notification preferences  ",
@@ -21,25 +21,26 @@ function validInput(overrides = {}) {
 }
 
 describe("Project edit validation", () => {
-  it("accepts exactly the approved lifecycle values", () => {
-    expect(PROJECT_LIFECYCLE_STATES).toEqual([
+  it("accepts Automatic and exactly the approved phase overrides", () => {
+    expect(PROJECT_PHASE_OVERRIDES).toEqual([
       "planning",
-      "active",
-      "stable",
+      "development",
+      "maintenance",
       "paused",
-      "completed",
       "archived",
     ]);
 
-    for (const lifecycleState of PROJECT_LIFECYCLE_STATES) {
-      expect(validateProjectEdit(validInput({ lifecycleState })).valid).toBe(true);
+    expect(validateProjectEdit(validInput()).values.phaseOverride).toBeNull();
+
+    for (const phaseOverride of PROJECT_PHASE_OVERRIDES) {
+      expect(validateProjectEdit(validInput({ phaseOverride })).valid).toBe(true);
     }
 
     const result = validateProjectEdit(
-      validInput({ lifecycleState: "needs_attention" }),
+      validInput({ phaseOverride: "unknown" }),
     );
     expect(result.valid).toBe(false);
-    expect(result.errors.lifecycleState).toBeDefined();
+    expect(result.errors.phaseOverride).toBeDefined();
   });
 
   it("trims Project-owned text and keeps nullable Next behavior", () => {
@@ -65,12 +66,12 @@ describe("Project edit validation", () => {
     );
 
     expect(inactive.values).toMatchObject({
-      lifecycleState: "active",
+      phaseOverride: null,
       needsAttention: false,
       attentionSummary: null,
     });
     expect(active.values).toMatchObject({
-      lifecycleState: "active",
+      phaseOverride: null,
       needsAttention: true,
       attentionSummary: "Production import is currently broken",
     });

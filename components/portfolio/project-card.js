@@ -72,10 +72,23 @@ export function ProjectCard({ card }) {
         <div className="flex shrink-0 flex-col items-end gap-2">
           <div className="flex items-center gap-1.5 text-xs text-subtle">
             <span
-              className={`lifecycle-dot lifecycle-${card.lifecycleState}`}
+              className={`phase-dot phase-${card.phase}`}
               aria-hidden="true"
             />
-            <span>{card.lifecycleLabel}</span>
+            <span
+              title={
+                card.phaseSource === "override"
+                  ? "Manual override"
+                  : card.phaseReason
+              }
+            >
+              {card.phaseLabel}
+              {card.phaseSource === "override" ? (
+                <span className="ml-1 font-mono text-[9px] uppercase tracking-wide text-muted">
+                  Manual
+                </span>
+              ) : null}
+            </span>
           </div>
           {card.needsAttention ? (
             <span className="attention-pill">Needs Attention</span>

@@ -21,7 +21,7 @@ export async function updateProjectAction(_previousState, formData) {
   const validation = validateProjectEdit({
     name: field(formData, "name"),
     tagline: field(formData, "tagline"),
-    lifecycleState: field(formData, "lifecycleState"),
+    phaseOverride: field(formData, "phaseOverride"),
     needsAttention: field(formData, "needsAttention"),
     attentionSummary: field(formData, "attentionSummary"),
     nextAction: field(formData, "nextAction"),

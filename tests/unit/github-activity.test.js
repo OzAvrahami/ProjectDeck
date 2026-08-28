@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   fetchRecentGitHubCommits,
+  detectCommitKind,
   formatCommitMessage,
   normalizeGitHubCommit,
 } from "../../lib/github/commits.js";
@@ -35,6 +36,8 @@ describe("GitHub recent activity", () => {
       "ship a change",
     );
     expect(formatCommitMessage("plain commit")).toBe("plain commit");
+    expect(detectCommitKind("feat(api)!: ship a change")).toBe("feat");
+    expect(detectCommitKind("plain commit")).toBeNull();
   });
 
   it("normalizes a narrow commit representation", () => {
@@ -43,6 +46,7 @@ describe("GitHub recent activity", () => {
       sha: "1234567890abcdef",
       shortSha: "1234567",
       message: "repair Project card",
+      kind: "fix",
       repository,
       author: "Developer",
       committedAt: "2026-08-25T10:00:00Z",

@@ -26,7 +26,7 @@ function describedBy(helpId, errorId, error) {
 export function ProjectEditForm({
   project,
   accentOptions,
-  lifecycleOptions,
+  phaseOptions,
   limits,
 }) {
   const [state, formAction, pending] = useActionState(
@@ -95,31 +95,31 @@ export function ProjectEditForm({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold" htmlFor="project-lifecycle">
-              Lifecycle
+            <label className="block text-sm font-semibold" htmlFor="project-phase">
+              Phase
             </label>
             <select
               className="mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm"
-              id="project-lifecycle"
-              name="lifecycleState"
-              defaultValue={values.lifecycleState}
-              aria-invalid={Boolean(errors.lifecycleState)}
+              id="project-phase"
+              name="phaseOverride"
+              defaultValue={values.phaseOverride ?? ""}
+              aria-invalid={Boolean(errors.phaseOverride)}
               aria-describedby={describedBy(
-                "project-lifecycle-help",
-                "project-lifecycle-error",
-                errors.lifecycleState,
+                "project-phase-help",
+                "project-phase-error",
+                errors.phaseOverride,
               )}
             >
-              {lifecycleOptions.map((option) => (
+              {phaseOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-xs leading-5 text-muted" id="project-lifecycle-help">
-              Lifecycle describes where the Project stands. Attention is managed separately below.
+            <p className="mt-2 text-xs leading-5 text-muted" id="project-phase-help">
+              Automatic uses read-only GitHub evidence. A named phase is an explicit override; attention remains separate.
             </p>
-            <FieldError id="project-lifecycle-error" message={errors.lifecycleState} />
+            <FieldError id="project-phase-error" message={errors.phaseOverride} />
           </div>
         </fieldset>
 
@@ -138,7 +138,7 @@ export function ProjectEditForm({
             <span>
               <span className="block text-sm font-semibold">Needs Attention</span>
               <span className="mt-1 block text-xs leading-5 text-muted">
-                Mark an explicit intervention condition without changing lifecycle.
+                Mark an explicit intervention condition without changing phase.
               </span>
             </span>
           </label>

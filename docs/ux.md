@@ -33,7 +33,7 @@ The main visual object is a responsive grid of project cards. Cards carry enough
 Every card follows the same reading order:
 
 1. project identity;
-2. lifecycle state;
+2. synthesized Project Phase;
 3. short description;
 4. **Next**;
 5. version, issues, and components;
@@ -41,13 +41,13 @@ Every card follows the same reading order:
 
 “Next” is visually important because it connects portfolio understanding to useful action. Secondary facts should support it rather than compete with it. Project-specific accents improve recognition without changing the meaning of common states.
 
-Lifecycle state and attention remain separate: a card may show a project as Active while also indicating that it Needs Attention.
+Phase and attention remain separate: a card may show a project in Development while also indicating that it Needs Attention. Inferred Phase is shown plainly; a manual override receives a subtle indicator, and Unknown remains visible rather than being hidden.
 
 Selecting a card opens its Project Workspace. Links or controls inside a card must have clear, non-overlapping targets and predictable keyboard focus.
 
 ## Projects
 
-Projects provides the full portfolio with search, lifecycle-state filtering, an independent Needs Attention filter, and the primary “Add projects” entry point into GitHub import. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.
+Projects provides the full portfolio with search, Project Phase filtering, an independent Needs Attention filter, and the primary “Add projects” entry point into GitHub import. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.
 
 ## Project Workspace
 
@@ -77,7 +77,7 @@ A secondary rail contains:
 
 The main column explains the project; the rail provides supporting facts and routes. On narrower layouts, the rail moves below the main content without changing the information priority.
 
-A secondary Edit Project action opens a focused form for ProjectDeck-owned context. Display-name changes keep the existing project URL stable. Lifecycle and Needs Attention use separate controls; clearing Needs Attention removes its summary from current presentation. Provider observations are visible but cannot be edited through this form.
+A secondary Edit Project action opens a focused form for ProjectDeck-owned context. Display-name changes keep the existing project URL stable. Phase offers Automatic plus explicit Planning, Development, Maintenance, Paused, and Archived overrides. Unknown is never a manual option. Phase and Needs Attention use separate controls; clearing Needs Attention removes its summary from current presentation. Provider observations are visible but cannot be edited through this form.
 
 Where a Railway service is explicitly connected, the rail also presents its latest provider-native deployment state. Missing credentials or provider failure remain local to that runtime resource.
 
@@ -97,12 +97,12 @@ Cached and manually maintained context should appear immediately. Refreshing one
 
 ## States and feedback
 
-Project lifecycle uses the plain-language states Planning, Active, Stable, Paused, Completed, and Archived. “Needs Attention” is an independent condition, not another lifecycle state.
+Project Phase uses the plain-language outputs Planning, Development, Maintenance, Paused, Archived, and Unknown. Automatic inference explains itself concisely in the Workspace. Paused and Archived require manual intent in v1. “Needs Attention” and runtime Health remain independent of Phase.
 
-- **New project:** explain the few details needed to make the first card useful, centered on identity, lifecycle state, description, next action, components, and resources.
+- **New project:** explain the few details needed to make the first card useful, centered on identity, automatic Phase, description, next action, components, and resources.
 - **Empty portfolio:** introduce ProjectDeck's purpose and offer one clear create-project action.
-- **Dormant project:** retain its lifecycle state and show the last known context without escalating inactivity alone into an attention condition.
-- **Paused, completed, or archived project:** make the lifecycle state clear and suppress attention based only on staleness.
+- **Dormant project:** show Unknown when evidence is insufficient; inactivity alone must not infer Paused, Archived, or an attention condition.
+- **Paused or archived project:** make the explicit manual Phase clear and suppress attention based only on staleness.
 - **Refreshing:** retain existing content, show lightweight local progress, and update sections without layout jumps.
 - **Unavailable source:** preserve last-known information, label the affected section, and offer retry or source access where useful.
 - **Unknown:** state that information is not known; do not substitute an error or a guess.
@@ -130,7 +130,7 @@ Motion should clarify transitions and feedback, respect reduced-motion preferenc
 - No KPI-card overload or giant analytics charts by default.
 - No raw commit or event feed as the primary experience.
 - Activity remains a restrained, scoped source view rather than a progress score.
-- No badge soup; lifecycle and attention colors require plain-language meaning.
+- No badge soup; Phase and attention colors require plain-language meaning.
 - No excessive nesting of cards inside cards.
 - No source, timestamp, confidence, or provenance detail shown merely because it exists.
 - No internal semantic model exposed as vocabulary the user must learn.

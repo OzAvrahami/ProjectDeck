@@ -202,6 +202,18 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,640px)_272px] lg:items-start lg:gap-11">
       <div className="space-y-11">
+        <WorkspaceSection title="Phase">
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`phase-dot phase-${card.phase}`} aria-hidden="true" />
+            <span className="font-semibold">{card.phaseLabel}</span>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-muted">
+            {card.phaseSource === "override"
+              ? "Manual override"
+              : `Automatic · ${card.phaseReason}`}
+          </p>
+        </WorkspaceSection>
+
         <WorkspaceSection title="Where we are">
           <p className="text-sm leading-6 text-muted">
             No current Project summary has been recorded.
@@ -289,7 +301,7 @@ export function ProjectWorkspace({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-semibold tracking-[-0.025em]">{card.name}</h1>
-              <span className="flex items-center gap-1.5 text-xs text-subtle"><span className={`lifecycle-dot lifecycle-${card.lifecycleState}`} aria-hidden="true" />{card.lifecycleLabel}</span>
+              <span className="flex items-center gap-1.5 text-xs text-subtle" title={card.phaseSource === "override" ? "Manual override" : card.phaseReason}><span className={`phase-dot phase-${card.phase}`} aria-hidden="true" />{card.phaseLabel}{card.phaseSource === "override" ? <span className="font-mono text-[9px] uppercase tracking-wide text-muted">Manual</span> : null}</span>
               {card.needsAttention ? <span className="attention-pill">Needs Attention</span> : null}
             </div>
             {card.tagline ? <p className="mt-1.5 text-sm text-subtle">{card.tagline}</p> : null}

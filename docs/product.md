@@ -12,7 +12,7 @@ Project resumption is important: ProjectDeck should reduce the effort required t
 
 ProjectDeck should help the user:
 
-- see every Planning, Active, Stable, Paused, Completed, or Archived project clearly;
+- see every Planning, Development, Maintenance, Paused, Archived, or Unknown project clearly;
 - understand the current state of a project in human terms;
 - see the next planned action;
 - see what needs attention without scanning every source;
@@ -36,9 +36,11 @@ The first view should explain where a project stands, what matters, and what is 
 
 The next planned action is core project information. Automation may suggest a better next step, but must not silently replace an action the user explicitly chose.
 
-### Attention is selective
+### Phase, attention, and health stay separate
 
-Lifecycle state describes where a project stands: Planning, Active, Stable, Paused, Completed, or Archived. “Needs Attention” is a separate condition indicating something that may require intervention; for example, a project may be Active and also Need Attention. Age alone should not turn a deliberately paused, completed, or archived project into a warning.
+Project Phase describes the kind of work a project is currently in: Planning, Development, Maintenance, Paused, or Archived. ProjectDeck synthesizes Phase from read-only GitHub Project workflow, Release, and recent development evidence when it can do so confidently. Unknown is a deliberate automatic result when evidence is unavailable, ambiguous, partial, nonstandard, or contradictory. The user can explicitly override Phase; Paused and Archived require that user intent in v1 and are never inferred from inactivity.
+
+“Needs Attention” is a separate user-owned condition indicating something that may require intervention. Runtime Health is a provider observation. A project may be in Development and also Need Attention, while a failed deployment can affect Health without changing Phase.
 
 ### Activity is not automatically progress
 

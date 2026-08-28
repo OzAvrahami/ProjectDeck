@@ -15,7 +15,13 @@ function project(overrides = {}) {
     slug: "limitpact",
     name: "LimitPact",
     tagline: "Trading discipline platform",
-    lifecycleState: "active",
+    phaseOverride: null,
+    phase: {
+      phase: "development",
+      label: "Development",
+      source: "inferred",
+      reason: "1 issue In Progress",
+    },
     needsAttention: false,
     attentionSummary: null,
     nextAction: null,
@@ -28,17 +34,25 @@ function project(overrides = {}) {
 }
 
 describe("Portfolio view model", () => {
-  it("counts lifecycle and attention independently", () => {
+  it("counts synthesized phase and attention independently", () => {
     const summary = summarizePortfolio([
       project({ needsAttention: true }),
-      project({ id: "stable", lifecycleState: "stable" }),
+      project({
+        id: "maintenance",
+        phase: {
+          phase: "maintenance",
+          label: "Maintenance",
+          source: "inferred",
+          reason: "published release exists, no active implementation",
+        },
+      }),
     ]);
 
     expect(summary).toEqual({
       projectCount: 2,
-      activeCount: 1,
+      developmentCount: 1,
       attentionCount: 1,
-      label: "2 projects · 1 active · 1 needs attention",
+      label: "2 projects · 1 in development · 1 needs attention",
     });
   });
 
@@ -76,6 +90,8 @@ describe("Portfolio view model", () => {
     expect(card.hasLastWork).toBe(false);
     expect(card.issueSummary).toBeNull();
     expect(card.releaseSummary).toBeNull();
+    expect(card.phase).toBe("development");
+    expect(card.phaseSource).toBe("inferred");
     expect(card).not.toHaveProperty("version");
     expect(card).not.toHaveProperty("releaseState");
     expect(buildProjectNextPresentation(card)).toEqual({
@@ -122,19 +138,27 @@ describe("Portfolio view model", () => {
     expect(card.releaseSummary).toEqual({ label: "Desktop v0.2.0" });
   });
 
-  it("filters lifecycle and Needs Attention independently", () => {
+  it("filters phase and Needs Attention independently", () => {
     const cards = [
-      buildProjectCardViewModel(project({ id: "active-attention", needsAttention: true })),
-      buildProjectCardViewModel(project({ id: "stable", lifecycleState: "stable" })),
+      buildProjectCardViewModel(project({ id: "development-attention", needsAttention: true })),
+      buildProjectCardViewModel(project({
+        id: "maintenance",
+        phase: {
+          phase: "maintenance",
+          label: "Maintenance",
+          source: "inferred",
+          reason: "published release exists",
+        },
+      })),
     ];
 
     expect(
       filterProjectCards(cards, {
-        lifecycle: "active",
+        phase: "development",
         attentionOnly: true,
       }).map(({ id }) => id),
-    ).toEqual(["active-attention"]);
-    expect(filterProjectCards(cards, { lifecycle: "stable" })[0].needsAttention).toBe(false);
+    ).toEqual(["development-attention"]);
+    expect(filterProjectCards(cards, { phase: "maintenance" })[0].needsAttention).toBe(false);
   });
 
   it("uses observed Activity only as explicitly labeled recent context", () => {

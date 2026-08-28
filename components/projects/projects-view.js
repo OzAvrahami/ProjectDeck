@@ -7,29 +7,29 @@ import { ProjectCard } from "../portfolio/project-card.js";
 import { ADD_PROJECTS_HREF } from "../../lib/projects/navigation.js";
 import { filterProjectCards } from "../../lib/projects/portfolio.js";
 
-const LIFECYCLES = [
+const PHASES = [
   ["all", "All"],
   ["planning", "Planning"],
-  ["active", "Active"],
-  ["stable", "Stable"],
+  ["development", "Development"],
+  ["maintenance", "Maintenance"],
   ["paused", "Paused"],
-  ["completed", "Completed"],
   ["archived", "Archived"],
+  ["unknown", "Unknown"],
 ];
 
 export function ProjectsView({ cards }) {
   const [query, setQuery] = useState("");
-  const [lifecycle, setLifecycle] = useState("all");
+  const [phase, setPhase] = useState("all");
   const [attentionOnly, setAttentionOnly] = useState(false);
   const visibleCards = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
     return filterProjectCards(cards, {
       query: needle,
-      lifecycle,
+      phase,
       attentionOnly,
     });
-  }, [attentionOnly, cards, lifecycle, query]);
+  }, [attentionOnly, cards, phase, query]);
 
   if (cards.length === 0) {
     return (
@@ -99,14 +99,14 @@ export function ProjectsView({ cards }) {
             Needs Attention only
           </label>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2" aria-label="Lifecycle filter">
-          {LIFECYCLES.map(([value, label]) => (
+        <div className="mt-4 flex flex-wrap gap-2" aria-label="Phase filter">
+          {PHASES.map(([value, label]) => (
             <button
-              className={`filter-chip ${lifecycle === value ? "filter-chip-active" : ""}`}
+              className={`filter-chip ${phase === value ? "filter-chip-active" : ""}`}
               key={value}
               type="button"
-              onClick={() => setLifecycle(value)}
-              aria-pressed={lifecycle === value}
+              onClick={() => setPhase(value)}
+              aria-pressed={phase === value}
             >
               {label}
             </button>
@@ -124,7 +124,7 @@ export function ProjectsView({ cards }) {
         <div className="mt-8 rounded-xl border border-line bg-surface px-6 py-10 text-center">
           <p className="font-semibold">No Projects match these filters</p>
           <p className="mt-2 text-sm text-subtle">
-            Adjust the search or lifecycle selection.
+            Adjust the search or phase selection.
           </p>
         </div>
       )}
