@@ -85,6 +85,7 @@ describe("Portfolio view model", () => {
     const card = buildProjectCardViewModel(project(), new Date("2026-08-25"));
 
     expect(card.nextAction).toBeNull();
+    expect(card.next.source).toBe("unavailable");
     expect(card.editHref).toBe("/projects/limitpact/edit");
     expect(card.components).toEqual([]);
     expect(card.hasLastWork).toBe(false);
@@ -96,8 +97,12 @@ describe("Portfolio view model", () => {
     expect(card).not.toHaveProperty("releaseState");
     expect(buildProjectNextPresentation(card)).toEqual({
       isSet: false,
-      label: "No next action set",
-      editHref: "/projects/limitpact/edit",
+      label: "Unavailable",
+      source: "unavailable",
+      isManual: false,
+      issueUrl: null,
+      metaLabel: null,
+      reason: "GitHub Projects provider is unavailable",
     });
   });
 
@@ -111,7 +116,35 @@ describe("Portfolio view model", () => {
     expect(buildProjectNextPresentation(card)).toEqual({
       isSet: true,
       label: "Review notification preferences",
-      editHref: null,
+      source: "manual",
+      isManual: true,
+      issueUrl: null,
+      metaLabel: null,
+      reason: "Manual override",
+    });
+  });
+
+  it("presents an inferred Next with compact workflow context", () => {
+    const card = buildProjectCardViewModel(
+      project({
+        next: {
+          action: "Automatically determine the next action",
+          source: "inferred",
+          issueNumber: 2,
+          issueUrl: "https://github.com/OzAvrahami/ProjectDeck/issues/2",
+          contextLabel: null,
+          status: "Ready",
+          priority: "P1 — High",
+          reason: "Ready is the highest workflow stage available",
+        },
+      }),
+    );
+
+    expect(buildProjectNextPresentation(card)).toMatchObject({
+      label: "Automatically determine the next action",
+      source: "inferred",
+      issueUrl: "https://github.com/OzAvrahami/ProjectDeck/issues/2",
+      metaLabel: "#2 · P1 · Ready",
     });
   });
 

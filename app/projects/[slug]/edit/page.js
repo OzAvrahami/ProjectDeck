@@ -6,6 +6,7 @@ import { ProjectEditForm } from "../../../../components/projects/project-edit-fo
 import {
   PROJECT_ACCENT_OPTIONS,
   PROJECT_EDIT_LIMITS,
+  PROJECT_NEXT_MODE_OPTIONS,
   PROJECT_PHASE_OPTIONS,
 } from "../../../../lib/projects/edit.js";
 import { buildQuickLinks } from "../../../../lib/projects/workspace.js";
@@ -65,6 +66,7 @@ export default async function EditProjectPage({ params }) {
           project={project}
           accentOptions={PROJECT_ACCENT_OPTIONS}
           phaseOptions={PROJECT_PHASE_OPTIONS}
+          nextModeOptions={PROJECT_NEXT_MODE_OPTIONS}
           limits={PROJECT_EDIT_LIMITS}
         />
 

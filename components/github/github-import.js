@@ -674,11 +674,11 @@ export function GitHubImport({
                         />
                       </label>
                       <label className="block text-sm font-medium">
-                        Next action <span className="text-muted">optional</span>
+                        Manual Next override <span className="text-muted">optional</span>
                         <input
                           className="mt-2 w-full rounded-lg border border-line bg-background px-3 py-2.5 text-sm"
                           value={candidate.nextAction}
-                          placeholder="Leave empty if not decided"
+                          placeholder="Leave empty for Automatic"
                           onChange={(event) =>
                             updateCandidate(candidate.id, {
                               nextAction: event.target.value,

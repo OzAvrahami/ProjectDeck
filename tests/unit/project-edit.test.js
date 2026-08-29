@@ -14,6 +14,7 @@ function validInput(overrides = {}) {
     phaseOverride: null,
     needsAttention: false,
     attentionSummary: "Old hidden attention text",
+    nextActionMode: "manual",
     nextAction: "  Review notification preferences  ",
     accent: PROJECT_ACCENT_OPTIONS[0].value,
     ...overrides,
@@ -43,7 +44,7 @@ describe("Project edit validation", () => {
     expect(result.errors.phaseOverride).toBeDefined();
   });
 
-  it("trims Project-owned text and keeps nullable Next behavior", () => {
+  it("trims Project-owned text and clears an empty manual override to Automatic", () => {
     const result = validateProjectEdit(validInput({ nextAction: "   " }));
 
     expect(result).toMatchObject({
@@ -51,9 +52,28 @@ describe("Project edit validation", () => {
       values: {
         name: "LimitPact",
         tagline: "Trading discipline platform",
+        nextActionMode: "automatic",
         nextAction: null,
       },
     });
+  });
+
+  it("clears a stored manual Next when Automatic is selected", () => {
+    expect(
+      validateProjectEdit(
+        validInput({
+          nextActionMode: "automatic",
+          nextAction: "This value must be cleared",
+        }),
+      ).values,
+    ).toMatchObject({ nextActionMode: "automatic", nextAction: null });
+  });
+
+  it("rejects an unknown Next action mode", () => {
+    const result = validateProjectEdit(validInput({ nextActionMode: "suggested" }));
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.nextActionMode).toBe("Choose Automatic or Manual override.");
   });
 
   it("keeps Needs Attention independent and clears inactive summaries", () => {

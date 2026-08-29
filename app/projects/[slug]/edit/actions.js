@@ -24,6 +24,7 @@ export async function updateProjectAction(_previousState, formData) {
     phaseOverride: field(formData, "phaseOverride"),
     needsAttention: field(formData, "needsAttention"),
     attentionSummary: field(formData, "attentionSummary"),
+    nextActionMode: field(formData, "nextActionMode"),
     nextAction: field(formData, "nextAction"),
     accent: field(formData, "accent"),
   });

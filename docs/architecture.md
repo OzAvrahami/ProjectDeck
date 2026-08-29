@@ -70,7 +70,7 @@ ProjectDeck owns information the user creates or controls, including:
 
 - Project identity, description, and an optional manual Project Phase override;
 - the separate Needs Attention condition and its ProjectDeck context;
-- the user's next action;
+- the user's optional manual Next override;
 - project accent and display preferences;
 - Components;
 - associations between Projects, Components, repositories, deployments, documents, and other resources;
@@ -82,7 +82,7 @@ ProjectDeck owns information the user creates or controls, including:
 External providers remain authoritative for information ProjectDeck observes, including:
 
 - GitHub repository metadata, issues, releases, and repository activity;
-- GitHub Projects v2 workflow fields and Issue items used as read-only Phase evidence;
+- GitHub Projects v2 workflow fields and Issue items used as read-only Phase and automatic Next evidence;
 - Railway deployments and runtime state;
 - future Supabase or Neon metadata about monitored projects;
 - data from other future project resources.
@@ -108,7 +108,7 @@ Drizzle is used because it provides a lightweight schema, migration, and query l
 
 - Use Server Components for data-backed pages and read-heavy composition where appropriate.
 - Use Client Components only where browser interaction or client state requires them.
-- Use Server Actions for ordinary internal mutations such as creating a Project, setting or clearing a manual Phase override, changing the next action, or editing resources when that keeps the flow simple.
+- Use Server Actions for ordinary internal mutations such as creating a Project, setting or clearing a manual Phase override, setting or clearing a manual Next override, or editing resources when that keeps the flow simple.
 - Use Route Handlers when an HTTP endpoint is genuinely useful, such as a provider callback, webhook, export, or endpoint consumed outside the normal application render flow.
 - Keep database access, provider tokens, and secret-bearing integration calls in server-only modules.
 
@@ -130,6 +130,8 @@ Project resolution uses stable repository identity already stored by the normal 
 
 A deterministic in-process phase service combines the resolved GitHub Project workflow with existing Release and activity observations. It returns the Phase, its source (`override`, `inferred`, or `unknown`), a concise reason, and bounded evidence. The legacy `lifecycle_state` column remains temporarily for backward compatibility, but is not the displayed Phase source. New manual control is stored in nullable `phase_override`; null means Automatic.
 
+The same batched GitHub Projects catalog and normalized Project read model also power automatic Next; the portfolio does not perform a separate catalog request per card. A non-empty existing `next_action` value is the manual override, while null means Automatic. Eligible open Issues rank by Status (`In Progress`, `Verify`, `Ready`) and then Standard v1 Priority (`P0`, `P1`, `P2`, `P3`, unset). GitHub does not expose a reliable “entered Status at” timestamp, so exact ties use Issue updated time descending, stable repository identity ascending, then Issue number ascending. The result preserves Issue URL, repository identity, and Component context when available.
+
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
 The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a multi-user credential model. A future public or commercial version would likely require a GitHub App or OAuth-based connection flow with user-scoped authorization.
@@ -149,6 +151,7 @@ Provider-specific API details stay inside `lib/railway/`. Project-facing code co
 - Never infer local branches, uncommitted changes, or workspace cleanliness from remote GitHub state.
 - Do not let one provider failure break the portfolio or unrelated project information.
 - Return Unknown instead of Planning or Maintenance when required Phase evidence is unavailable, partial, ambiguous, nonstandard, or contradictory.
+- Keep automatic Next unavailable when required GitHub Project evidence cannot be ranked safely; reserve “No clear next action” for a successfully resolved Project with no eligible open In Progress, Verify, or Ready Issues.
 - Keep Project Phase independent from Railway deployment/runtime Health; a failed deployment never changes Phase by itself.
 
 This requires straightforward timestamps, cached observations, and localized error handling—not a semantic-claim, authority, or confidence-governance engine.

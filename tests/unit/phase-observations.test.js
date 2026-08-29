@@ -32,10 +32,10 @@ describe("Project phase observation failures", () => {
     });
   });
 
-  it("does not call GitHub Projects when every Project has an override", async () => {
+  it("does not call GitHub Projects when both Phase and Next have manual overrides", async () => {
     const fetchImpl = vi.fn();
     const evidence = await observeProjectPhaseEvidence(
-      [{ id: "project-id", phaseOverride: "paused" }],
+      [{ id: "project-id", phaseOverride: "paused", nextAction: "Ship the build" }],
       { token: "", fetchImpl },
     );
 

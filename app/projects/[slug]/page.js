@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "../../../components/app-shell.js";
 import { ProjectWorkspace } from "../../../components/workspace/project-workspace.js";
-import { observeProjectsWithPhase } from "../../../lib/projects/phase-observations.js";
+import { observeProjectsWithAutomation } from "../../../lib/projects/phase-observations.js";
 import { buildProjectCardViewModel } from "../../../lib/projects/portfolio.js";
 import { getProjectWorkspaceBySlug } from "../../../lib/projects/queries.js";
 import { observeProjectRailway } from "../../../lib/projects/railway-observations.js";
@@ -41,7 +41,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
   }
 
   const [observedProjects, railwaySummary] = await Promise.all([
-    observeProjectsWithPhase([project]),
+    observeProjectsWithAutomation([project]),
     observeProjectRailway(project),
   ]);
   const [observedProject] = observedProjects;

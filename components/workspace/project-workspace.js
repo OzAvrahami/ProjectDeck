@@ -3,7 +3,10 @@ import Link from "next/link";
 import { ActivityRows } from "../github/activity-view.js";
 import { ProjectMark } from "../portfolio/project-card.js";
 import { WORKSPACE_TABS } from "../../lib/projects/navigation.js";
-import { formatRelativeTime } from "../../lib/projects/portfolio.js";
+import {
+  buildProjectNextPresentation,
+  formatRelativeTime,
+} from "../../lib/projects/portfolio.js";
 import {
   buildQuickLinks,
   listDocumentationResources,
@@ -198,6 +201,7 @@ function RuntimePanel({ project, railwaySummary }) {
 function WorkspaceOverview({ project, card, railwaySummary }) {
   const quickLinks = buildQuickLinks(project.resources);
   const recentActivity = project.githubSummary.activity;
+  const next = buildProjectNextPresentation(card);
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,640px)_272px] lg:items-start lg:gap-11">
@@ -222,7 +226,27 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
 
         <WorkspaceSection title="Next up">
           <div className="rounded-xl border border-line bg-surface p-5 shadow-[var(--card-shadow)]">
-            <p className={`text-[16px] font-semibold leading-7 ${card.nextAction ? "" : "text-muted"}`}>{card.nextAction ?? "No next action set"}</p>
+            {next.issueUrl ? (
+              <a
+                className="text-[16px] font-semibold leading-7 hover:text-accent hover:underline"
+                href={next.issueUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {next.label}
+              </a>
+            ) : (
+              <p className={`text-[16px] font-semibold leading-7 ${next.isSet ? "" : "text-muted"}`}>
+                {next.label}
+              </p>
+            )}
+            <p className="mt-2 font-mono text-[10.5px] leading-5 text-muted">
+              {next.source === "manual"
+                ? "Manual override"
+                : next.source === "inferred"
+                  ? `Automatic · ${next.metaLabel}`
+                  : `Automatic · ${next.reason}`}
+            </p>
           </div>
         </WorkspaceSection>
 

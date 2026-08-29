@@ -1,7 +1,7 @@
 import { AppShell } from "../../components/app-shell.js";
 import { PortfolioErrorState } from "../../components/portfolio/portfolio-home.js";
 import { ProjectsView } from "../../components/projects/projects-view.js";
-import { observeProjectsWithPhase } from "../../lib/projects/phase-observations.js";
+import { observeProjectsWithAutomation } from "../../lib/projects/phase-observations.js";
 import { buildProjectCardViewModel } from "../../lib/projects/portfolio.js";
 import { listPortfolioProjects } from "../../lib/projects/queries.js";
 
@@ -20,7 +20,7 @@ export default async function ProjectsPage() {
     );
   }
 
-  const observedProjects = await observeProjectsWithPhase(projects);
+  const observedProjects = await observeProjectsWithAutomation(projects);
 
   return (
     <AppShell activeSection="Projects">

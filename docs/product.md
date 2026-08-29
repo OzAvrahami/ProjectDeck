@@ -14,7 +14,7 @@ ProjectDeck should help the user:
 
 - see every Planning, Development, Maintenance, Paused, Archived, or Unknown project clearly;
 - understand the current state of a project in human terms;
-- see the next planned action;
+- see the strongest current automatic Next action or an explicit manual override;
 - see what needs attention without scanning every source;
 - understand meaningful recent work rather than raw activity volume;
 - inspect relevant releases, deployments, and issues;
@@ -32,9 +32,11 @@ A Project represents a product or meaningful body of work. A repository is a com
 
 The first view should explain where a project stands, what matters, and what is next. Raw commits, events, issue lists, and deployment logs remain available in their appropriate views but should not dominate orientation.
 
-### “Next” is first-class and user-owned
+### “Next” is first-class, automatic by default, and manually overridable
 
-The next planned action is core project information. Automation may suggest a better next step, but must not silently replace an action the user explicitly chose.
+The next action is core project information. ProjectDeck normally selects it deterministically from the resolved GitHub Project: open In Progress work first, then Verify, then Ready, with Priority used only within the same Status. Backlog, Done, closed Issues, and non-Issue items are never selected merely to fill the UI. A non-empty ProjectDeck-owned Next value is an explicit manual override and always wins until the user clears it.
+
+When no eligible work exists, ProjectDeck says “No clear next action.” When GitHub Project evidence is unavailable, unresolved, ambiguous, nonstandard, or insufficient, it says that Next is unavailable rather than implying that no work exists. Multi-repository Products retain the selected Issue's repository or Component context.
 
 ### Phase, attention, and health stay separate
 

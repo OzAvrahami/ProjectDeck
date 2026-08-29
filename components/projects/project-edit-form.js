@@ -27,6 +27,7 @@ export function ProjectEditForm({
   project,
   accentOptions,
   phaseOptions,
+  nextModeOptions,
   limits,
 }) {
   const [state, formAction, pending] = useActionState(
@@ -36,6 +37,9 @@ export function ProjectEditForm({
   const values = state.values ?? project;
   const [needsAttention, setNeedsAttention] = useState(
     Boolean(values.needsAttention),
+  );
+  const [nextMode, setNextMode] = useState(
+    values.nextAction ? "manual" : "automatic",
   );
   const errors = state.errors ?? {};
 
@@ -167,8 +171,33 @@ export function ProjectEditForm({
             Next
           </legend>
           <div className="mt-5">
+            <label className="block text-sm font-semibold" htmlFor="next-action-mode">
+              Next action mode
+            </label>
+            <select
+              className="mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm"
+              id="next-action-mode"
+              name="nextActionMode"
+              value={nextMode}
+              onChange={(event) => setNextMode(event.target.value)}
+              aria-invalid={Boolean(errors.nextActionMode)}
+              aria-describedby={errors.nextActionMode ? "next-action-mode-error" : "next-action-mode-help"}
+            >
+              {nextModeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs leading-5 text-muted" id="next-action-mode-help">
+              Automatic selects from open GitHub Project Issues in In Progress, Verify, then Ready. Manual override always wins until cleared.
+            </p>
+            <FieldError id="next-action-mode-error" message={errors.nextActionMode} />
+          </div>
+
+          <div className={`mt-5 ${nextMode === "manual" ? "" : "hidden"}`}>
             <label className="block text-sm font-semibold" htmlFor="next-action">
-              Next action <span className="font-normal text-muted">optional</span>
+              Manual Next action
             </label>
             <textarea
               className="mt-2 min-h-24 w-full resize-y rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm leading-6"
@@ -176,7 +205,8 @@ export function ProjectEditForm({
               name="nextAction"
               maxLength={limits.nextAction}
               defaultValue={values.nextAction ?? ""}
-              placeholder="Leave empty if no next action has been decided"
+              disabled={nextMode !== "manual"}
+              placeholder="What do you explicitly intend to do next?"
               aria-invalid={Boolean(errors.nextAction)}
               aria-describedby={describedBy(
                 "next-action-help",
@@ -185,7 +215,7 @@ export function ProjectEditForm({
               )}
             />
             <p className="mt-2 text-xs leading-5 text-muted" id="next-action-help">
-              This is your committed next action. ProjectDeck will not infer it from provider activity.
+              Leave this empty to clear the override and return to Automatic.
             </p>
             <FieldError id="next-action-error" message={errors.nextAction} />
           </div>

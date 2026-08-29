@@ -23,6 +23,13 @@ function PortfolioHeader({ summary }) {
 }
 
 function ContinueCard({ card }) {
+  const nextLabel =
+    card.next.source === "none"
+      ? "No clear next action"
+      : card.next.source === "unavailable"
+        ? "Unavailable"
+        : card.next.action;
+
   return (
     <section
       className="continue-card"
@@ -51,7 +58,7 @@ function ContinueCard({ card }) {
         ) : null}
         <p className="mt-1 text-sm leading-6">
           <span className="text-muted">Next: </span>
-          {card.nextAction ?? "No next action set"}
+          {nextLabel}
         </p>
       </div>
       <Link

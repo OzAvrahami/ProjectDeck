@@ -102,24 +102,34 @@ export function ProjectCard({ card }) {
           <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted">
             Next
           </span>
-        </div>
-        <p
-          className={`text-[15.5px] font-semibold leading-[1.45] ${
-            next.isSet ? "text-foreground" : "text-muted"
-          }`}
-        >
-          {next.label}
-          {next.isSet ? (
-            <span className="project-accent-text"> →</span>
+          {next.isManual ? (
+            <span className="font-mono text-[9px] uppercase tracking-wide text-muted">
+              Manual
+            </span>
           ) : null}
-        </p>
-        {!next.isSet ? (
-          <Link
-            className="project-card-secondary-link project-accent-text mt-1.5 inline-flex text-xs font-semibold hover:underline"
-            href={next.editHref}
+        </div>
+        {next.issueUrl ? (
+          <a
+            className="project-card-secondary-link block text-[15.5px] font-semibold leading-[1.45] hover:text-[var(--project-color)] hover:underline"
+            href={next.issueUrl}
+            target="_blank"
+            rel="noreferrer"
           >
-            Set next →
-          </Link>
+            {next.label}
+          </a>
+        ) : (
+          <p
+            className={`text-[15.5px] font-semibold leading-[1.45] ${
+              next.isSet ? "text-foreground" : "text-muted"
+            }`}
+          >
+            {next.label}
+          </p>
+        )}
+        {next.metaLabel ? (
+          <p className="mt-1.5 font-mono text-[10.5px] leading-5 text-muted">
+            {next.metaLabel}
+          </p>
         ) : null}
       </div>
 
