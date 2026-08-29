@@ -6,7 +6,7 @@ This document defines the initial technical architecture for ProjectDeck v0.1. P
 
 ProjectDeck is one full-stack Next.js 16 application in one repository, deployed as one Railway service. React and Tailwind CSS provide the application UI. Next.js App Router handles pages, server rendering, mutations, and the limited HTTP endpoints the product genuinely needs.
 
-All ProjectDeck-owned data is stored in a dedicated Neon PostgreSQL database. Server-side modules access that database through Drizzle and call external providers such as GitHub and Railway.
+All ProjectDeck-owned data is stored in a dedicated Neon PostgreSQL database. Server-side modules access that database through Drizzle and call external providers such as GitHub, Railway, and Vercel, plus explicitly configured health endpoints.
 
 ```text
 Browser
@@ -18,7 +18,9 @@ Next.js 16 App Router (React + Tailwind CSS)
 Server-side integration and data layer
   |---> Neon PostgreSQL (ProjectDeck-owned data)
   |---> GitHub API (external observed data)
-  `---> Railway API (external observed data)
+  |---> Railway / Vercel APIs (external deployment observations)
+  |---> Explicit HTTP health endpoints
+  `---> Monitored PostgreSQL services (read-only SELECT 1)
 ```
 
 There is no separate Express server, API service, worker deployment, or microservice boundary in the MVP.
@@ -47,8 +49,10 @@ components/              # Shared UI components
   workspace/             # Project Workspace UI
   github/                # GitHub observation UI
 lib/                     # Server-side application and integration modules
+  health/                # Normalized Health model and provider adapters
   github/                # GitHub adapter and mapping code
   railway/               # Railway adapter and mapping code
+  vercel/                # Vercel read-only deployment adapter
   projects/              # Project queries and application operations
 db/
   client.js              # Server-only Drizzle database client
@@ -74,6 +78,7 @@ ProjectDeck owns information the user creates or controls, including:
 - project accent and display preferences;
 - Components;
 - associations between Projects, Components, repositories, deployments, documents, and other resources;
+- explicit resource-monitor configuration, including whether a monitor affects top-level Project Health;
 - manually maintained project notes or context;
 - theme or user preferences if they are persisted later.
 
@@ -83,13 +88,14 @@ External providers remain authoritative for information ProjectDeck observes, in
 
 - GitHub repository metadata, issues, releases, and repository activity;
 - GitHub Projects v2 workflow fields and Issue items used as read-only Phase and automatic Next evidence;
-- Railway deployments and runtime state;
+- Railway and Vercel production deployment state;
+- explicit HTTP endpoint responses and read-only PostgreSQL connectivity results;
 - future Supabase or Neon metadata about monitored projects;
 - data from other future project resources.
 
 ProjectDeck may store normalized snapshots or last-known external data to support fast loading and local failure handling. Stored observations must remain distinguishable from user-owned state and must retain enough provider and freshness context to avoid presenting stale data as current.
 
-ProjectDeck's Neon database is its own application database. It is independent of any Neon, Supabase, PostgreSQL, or other database used by a monitored project. ProjectDeck does not read a monitored project's application database merely because that project is represented in ProjectDeck.
+ProjectDeck's Neon database is its own application database. It is independent of any Neon, Supabase, PostgreSQL, or other database used by a monitored project. ProjectDeck never connects merely because a database resource exists: a PostgreSQL monitor must be explicit and performs only `SELECT 1`.
 
 This document deliberately does not define detailed tables or columns.
 
@@ -101,6 +107,7 @@ ProjectDeck uses Neon PostgreSQL for its own persistent data and Drizzle for sch
 - Next.js server-side code accesses the database directly through the Drizzle client.
 - Browser code never receives database credentials or connects directly to Neon.
 - Database operations should stay close to the feature or server-side project module that uses them.
+- `resource_monitors` stores enabled state, monitor type, Project/Component/Resource association, health impact, and non-secret configuration. PostgreSQL configuration stores only the name of a server environment variable.
 
 Drizzle is used because it provides a lightweight schema, migration, and query layer that remains close to SQL. The MVP should not place a generic repository abstraction over every query; abstraction should follow demonstrated repetition or testing needs.
 
@@ -136,11 +143,18 @@ The token must never be exposed to browser code, client-rendered configuration, 
 
 The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a multi-user credential model. A future public or commercial version would likely require a GitHub App or OAuth-based connection flow with user-scoped authorization.
 
-## 8. Railway Integration
+## 8. Operational Health Integrations
 
-Railway is the first deployment and runtime provider. Its server-side adapter fetches and normalizes only the latest deployment information needed by ProjectDeck. Service association is explicit: ProjectDeck stores Railway project, environment, and service IDs in the generic Resource external identity and never auto-links services by name.
+Project Health is a provider-agnostic aggregation over explicitly configured resource monitors. Each adapter returns a normalized resource result with status, provider/resource/Component identity, a concise reason, observation time, safe evidence, and a scoped error classification. Main UI composition consumes only normalized `healthy`, `degraded`, `down`, `unknown`, and `not_monitored` states.
 
-Provider-specific API details stay inside `lib/railway/`. Project-facing code consumes a small ProjectDeck-shaped result rather than Railway's raw response format. Future providers can follow the same local adapter pattern without changing the Project model or creating a generalized plugin framework.
+- Railway uses an explicitly associated project/environment/service identity. Success/active state is Healthy; failed or crashed is Down; transitional deployment state is Degraded; access or provider failure is Unknown.
+- Vercel uses an explicit stable Project ID and optional Team ID. The latest production deployment is observed through the server-side `VERCEL_TOKEN`; ready is Healthy, error/canceled is Down, and building/queued/initializing state is Degraded.
+- PostgreSQL monitoring stores only a server environment-variable name. A short-lived connection performs `SELECT 1`, uses a bounded timeout, and is always closed. A successful check is Healthy, network timeout/unreachability is Down, and missing or rejected configuration is Unknown.
+- HTTP monitoring requires an explicit HTTP/HTTPS endpoint and GET or HEAD. It sends no cookies, credentials, or body, does not follow redirects, and uses a bounded timeout. 2xx is Healthy; a conclusive error response or network failure is Down; invalid configuration or redirect ambiguity is Unknown.
+
+Aggregation considers only enabled monitors marked `affects_project_health`. No such monitors means Not monitored. Any required Down observation makes the Project Down; all Healthy makes it Healthy; all Unknown makes it Unknown; otherwise mixed, partial, or transitional state is Degraded. Component/resource evidence remains available in the Workspace. This contract is intentionally small and extensible without a plugin framework.
+
+MVP observations run at request time with a small global concurrency limit and provider-specific bounded timeouts. Existing Railway calls are reused through the Health adapter rather than duplicated. This is appropriate for the current portfolio; measured latency or scale, not speculation, is the trigger for caching or background observation later.
 
 ## 9. Failure and Freshness Behavior
 
@@ -152,7 +166,8 @@ Provider-specific API details stay inside `lib/railway/`. Project-facing code co
 - Do not let one provider failure break the portfolio or unrelated project information.
 - Return Unknown instead of Planning or Maintenance when required Phase evidence is unavailable, partial, ambiguous, nonstandard, or contradictory.
 - Keep automatic Next unavailable when required GitHub Project evidence cannot be ranked safely; reserve “No clear next action” for a successfully resolved Project with no eligible open In Progress, Verify, or Ready Issues.
-- Keep Project Phase independent from Railway deployment/runtime Health; a failed deployment never changes Phase by itself.
+- Keep Project Phase and automatic Next independent from operational Health; a failed deployment or database check never changes either.
+- Distinguish Not monitored (no enabled health-affecting monitors) from Unknown (monitoring is configured but cannot establish state).
 
 This requires straightforward timestamps, cached observations, and localized error handling—not a semantic-claim, authority, or confidence-governance engine.
 
@@ -160,14 +175,14 @@ This requires straightforward timestamps, cached observations, and localized err
 
 ProjectDeck v0.1 is single-user and uses a minimal private-access gate: one server-side password creates a signed, time-limited HttpOnly session cookie. It has no signup, accounts, organizations, roles, or multi-user identity model. Next.js `proxy.js` redirects unauthenticated requests before product routes render, and sensitive Server Actions also verify the session.
 
-Database credentials, GitHub tokens, Railway credentials, and future provider secrets remain server-side and are supplied through deployment environment variables. Sensitive values must not enter client bundles, browser storage, rendered HTML, or routine logs.
+Database credentials, GitHub tokens, Railway/Vercel credentials, and monitored PostgreSQL connection strings remain server-side and are supplied through deployment environment variables. Monitor records may reference an environment-variable name but never store its secret value. Sensitive values must not enter client bundles, browser storage, rendered HTML, or routine logs.
 
 The access gate is suitable only for a private single-user deployment. A public or multi-user product would still require full authentication, authorization, user isolation, and a different provider-credential model.
 
 ## 11. Testing
 
 - Use Vitest for unit tests and server-side integration tests.
-- Keep GitHub and Railway adapters testable with fixtures, fakes, or mocked transport so routine tests do not require live provider calls.
+- Keep GitHub and Health adapters testable with fixtures, fakes, or mocked transport so routine tests do not require live provider calls.
 - Use live integration tests selectively when credentials and a controlled test resource are explicitly available.
 
 Browser routes and theme/responsive behavior are manually verified for the MVP; Playwright is not installed.
@@ -229,6 +244,7 @@ None of these responses should be built before its trigger exists.
 | Server API boundary | Server Components and Server Actions by default; Route Handlers only when useful |
 | GitHub connection | Server-side repository PAT plus a read-only Projects v2 PAT |
 | First runtime integration | Railway |
+| Operational Health | Explicit provider-agnostic resource monitors; Railway, Vercel, PostgreSQL, and HTTP in v1 |
 | Hosting | One Railway service |
 | Authentication | Minimal signed-cookie password gate; no user/account model |
 | Testing | Vitest for focused unit/integration checks; manual browser QA |

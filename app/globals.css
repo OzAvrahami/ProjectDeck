@@ -39,6 +39,11 @@
   --status-paused: oklch(58% 0.01 260);
   --status-completed: oklch(46% 0.12 258);
   --status-archived: oklch(58% 0.01 260);
+  --health-healthy: oklch(46% 0.15 150);
+  --health-degraded: oklch(58% 0.16 80);
+  --health-down: oklch(50% 0.2 25);
+  --health-unknown: oklch(52% 0.02 260);
+  --health-not-monitored: oklch(62% 0.01 260);
   --card-shadow: 0 1px 3px oklch(25% 0.01 260 / 0.06);
   --project-lightness: 46%;
   --project-chroma: 0.16;
@@ -66,6 +71,11 @@
   --status-paused: oklch(52% 0.01 260);
   --status-archived: oklch(48% 0.01 260);
   --status-unknown: oklch(62% 0.03 285);
+  --health-healthy: oklch(74% 0.15 150);
+  --health-degraded: oklch(76% 0.15 80);
+  --health-down: oklch(66% 0.19 25);
+  --health-unknown: oklch(62% 0.02 260);
+  --health-not-monitored: oklch(52% 0.01 260);
   --card-shadow: none;
   --project-lightness: 72%;
   --project-chroma: 0.14;
@@ -94,6 +104,11 @@
     --status-paused: oklch(52% 0.01 260);
     --status-archived: oklch(48% 0.01 260);
     --status-unknown: oklch(62% 0.03 285);
+    --health-healthy: oklch(74% 0.15 150);
+    --health-degraded: oklch(76% 0.15 80);
+    --health-down: oklch(66% 0.19 25);
+    --health-unknown: oklch(62% 0.02 260);
+    --health-not-monitored: oklch(52% 0.01 260);
     --card-shadow: none;
     --project-lightness: 72%;
     --project-chroma: 0.14;
@@ -446,6 +461,30 @@ select:focus-visible {
 
 .phase-unknown {
   background: var(--status-unknown);
+}
+
+.health-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--health-unknown);
+}
+
+.health-healthy {
+  background: var(--health-healthy);
+}
+
+.health-degraded {
+  background: var(--health-degraded);
+}
+
+.health-down {
+  background: var(--health-down);
+}
+
+.health-not_monitored {
+  background: var(--health-not-monitored);
 }
 
 .attention-pill {

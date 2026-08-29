@@ -34,14 +34,15 @@ Every card follows the same reading order:
 
 1. project identity;
 2. synthesized Project Phase;
-3. short description;
-4. **Next**;
-5. version, issues, and components;
-6. recent meaningful work.
+3. compact operational Health;
+4. short description;
+5. **Next**;
+6. version, issues, and components;
+7. recent meaningful work.
 
 “Next” is visually important because it connects portfolio understanding to useful action. It is automatic by default, selected from open GitHub Project work in In Progress, Verify, then Ready order; Priority breaks ties only within a Status. A manual override is labeled subtly and always wins until cleared. “No clear next action” means the resolved workflow has no eligible Issue, while “Unavailable” means ProjectDeck could not establish the answer. Secondary facts should support Next rather than compete with it. Project-specific accents improve recognition without changing the meaning of common states.
 
-Phase and attention remain separate: a card may show a project in Development while also indicating that it Needs Attention. Inferred Phase is shown plainly; a manual override receives a subtle indicator, and Unknown remains visible rather than being hidden.
+Phase, Health, and attention remain separate: a card may show a Project in Development with Health Down while also carrying a user-owned Needs Attention flag. Health is compact and always uses plain text in addition to color. Inferred Phase is shown plainly; a manual override receives a subtle indicator, and Unknown remains visible rather than being hidden.
 
 Selecting a card opens its Project Workspace. Links or controls inside a card must have clear, non-overlapping targets and predictable keyboard focus.
 
@@ -64,6 +65,7 @@ The Overview should feel like a project command center.
 The main content contains:
 
 - **Where we are** — a concise current-state summary;
+- **Health** — the synthesized operational result plus resource/Component evidence and concise failure reasons;
 - **Next up** — the automatic GitHub Project candidate or explicit manual override, with concise Issue, Status, Priority, and Component context where useful;
 - **Needs attention** — selective intervention items;
 - **Recent work** — recent observed development activity, clearly distinguished from inferred progress.
@@ -79,9 +81,7 @@ The main column explains the project; the rail provides supporting facts and rou
 
 A secondary Edit Project action opens a focused form for ProjectDeck-owned context. Display-name changes keep the existing project URL stable. Phase offers Automatic plus explicit Planning, Development, Maintenance, Paused, and Archived overrides. Unknown is never a manual option. Next offers Automatic or Manual override; selecting Automatic clears the stored `next_action`, while a non-empty manual value takes precedence over provider evidence. Phase and Needs Attention use separate controls; clearing Needs Attention removes its summary from current presentation. Provider observations are visible but cannot be edited through this form.
 
-Where a Railway service is explicitly connected, the rail also presents its latest provider-native deployment state. Missing credentials or provider failure remain local to that runtime resource.
-
-GitHub setup is reachable through Projects and Settings and provides clear routes back to both. Railway management stays scoped to the relevant Project Workspace so Settings does not become a global integration console.
+Monitoring configuration stays scoped to the relevant Project Workspace. The user explicitly chooses None, Railway deployment, Vercel deployment, HTTP endpoint, or PostgreSQL and whether the monitor affects Project Health. Existing Resource associations are not pinged automatically. A monitor may be disabled without deleting the Resource. GitHub setup remains reachable through Projects and Settings, while operational monitoring does not turn Settings into a global infrastructure console.
 
 ## Returning to work
 
@@ -97,7 +97,9 @@ Cached and manually maintained context should appear immediately. Refreshing one
 
 ## States and feedback
 
-Project Phase uses the plain-language outputs Planning, Development, Maintenance, Paused, Archived, and Unknown. Automatic inference explains itself concisely in the Workspace. Paused and Archived require manual intent in v1. “Needs Attention” and runtime Health remain independent of Phase.
+Project Phase uses the plain-language outputs Planning, Development, Maintenance, Paused, Archived, and Unknown. Automatic inference explains itself concisely in the Workspace. Paused and Archived require manual intent in v1. Needs Attention and operational Health remain independent of Phase and Next.
+
+Operational Health uses Healthy, Degraded, Down, Unknown, and Not monitored. Not monitored means no enabled monitor has been designated to affect top-level Health. Unknown means monitoring exists but its state could not be established. The Workspace retains provider, Resource, Component, observation time, and a concise reason; cards show only the aggregate state.
 
 Automatic Next uses only open Issue items in Standard v1 In Progress, Verify, or Ready states. Backlog alone never becomes Next. Equal Status and Priority candidates resolve deterministically by most recently updated Issue, stable repository identity, then Issue number. Multi-repository cards show Component or repository scope only when needed.
 

@@ -11,7 +11,8 @@ import {
   buildQuickLinks,
   listDocumentationResources,
 } from "../../lib/projects/workspace.js";
-import { RailwayConnectForm } from "./railway-connect-form.js";
+import { updateHealthMonitorAction } from "../../app/projects/[slug]/actions.js";
+import { HealthMonitorForm } from "./health-monitor-form.js";
 
 const GITHUB_FAILURE_LABELS = {
   missing_token: "GitHub is not configured",
@@ -169,36 +170,86 @@ function WorkspaceEmpty({ title, message }) {
   );
 }
 
-function RuntimePanel({ project, railwaySummary }) {
+function providerLabel(provider) {
+  return {
+    railway: "Railway",
+    vercel: "Vercel",
+    postgresql: "PostgreSQL",
+    http: "HTTP",
+  }[provider] ?? provider;
+}
+
+function HealthEvidence({ project }) {
+  const health = project.health;
+
   return (
-    <aside className="workspace-rail-section">
-      <h3 className="workspace-rail-title">Runtime</h3>
-      {railwaySummary.status === "not_connected" ? (
-        <p className="text-xs leading-5 text-muted">No Railway service connected</p>
-      ) : (
-        <div className="space-y-3">
-          {railwaySummary.items.map((item) => (
-            <div key={item.resource.id}>
-              <a className="text-xs font-semibold hover:text-accent" href={item.resource.url} target="_blank" rel="noreferrer">{item.resource.label}</a>
-              <p className="mt-1 text-xs leading-5 text-muted">
-                {item.status === "success" ? item.label : "Runtime unavailable"}
-              </p>
-              {item.status === "success" && item.deployment?.observedStateAt ? (
-                <p className="font-mono text-[10px] text-muted">Observed {formatRelativeTime(item.deployment.observedStateAt)}</p>
-              ) : null}
-              {item.status === "unavailable" ? (
-                <p className="font-mono text-[10px] text-muted">{item.error.message}</p>
-              ) : null}
-            </div>
+    <WorkspaceSection
+      title="Health"
+      description="Observed operational state. Health is independent from Phase and Next."
+    >
+      <div className="flex items-center gap-2">
+        <span className={`health-dot health-${health.status}`} aria-hidden="true" />
+        <p className="text-base font-semibold">{health.label}</p>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-muted">{health.reason}</p>
+      {health.observations.length > 0 ? (
+        <div className="mt-5 border-b border-line">
+          {health.observations.map((observation) => (
+            <article className="border-t border-line py-4" key={observation.monitor.id}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-semibold">
+                    {observation.component?.name ? `${observation.component.name} · ` : ""}
+                    {observation.monitor.label}
+                  </p>
+                  <p className="mt-1 flex items-center gap-2 font-mono text-[10.5px] text-muted">
+                    <span>{providerLabel(observation.provider)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className={`health-dot health-${observation.status}`} aria-hidden="true" />
+                      {observation.label}
+                    </span>
+                    {!observation.monitor.affectsProjectHealth ? (
+                      <><span aria-hidden="true">·</span><span>Does not affect Project Health</span></>
+                    ) : null}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-subtle">{observation.reason}</p>
+                  {observation.observedAt ? (
+                    <p className="mt-1 font-mono text-[10px] text-muted">Observed {formatRelativeTime(observation.observedAt)}</p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <form action={updateHealthMonitorAction}>
+                    <input type="hidden" name="slug" value={project.slug} />
+                    <input type="hidden" name="monitorId" value={observation.monitor.id} />
+                    <input type="hidden" name="enabled" value={String(!observation.monitor.enabled)} />
+                    <input type="hidden" name="affectsProjectHealth" value={String(observation.monitor.affectsProjectHealth)} />
+                    <button className="rounded-md border border-line px-2.5 py-1.5 text-[11px] font-semibold hover:border-accent" type="submit">
+                      {observation.monitor.enabled ? "Disable" : "Enable"}
+                    </button>
+                  </form>
+                  <form action={updateHealthMonitorAction}>
+                    <input type="hidden" name="slug" value={project.slug} />
+                    <input type="hidden" name="monitorId" value={observation.monitor.id} />
+                    <input type="hidden" name="enabled" value={String(observation.monitor.enabled)} />
+                    <input type="hidden" name="affectsProjectHealth" value={String(!observation.monitor.affectsProjectHealth)} />
+                    <button className="rounded-md border border-line px-2.5 py-1.5 text-[11px] font-semibold hover:border-accent" type="submit">
+                      {observation.monitor.affectsProjectHealth ? "Make informational" : "Affect Project Health"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </article>
           ))}
         </div>
+      ) : (
+        <WorkspaceEmpty title="No monitors configured" message="Not monitored is a valid operational state, not a provider failure." />
       )}
-      <RailwayConnectForm slug={project.slug} components={project.components} />
-    </aside>
+    </WorkspaceSection>
   );
 }
 
-function WorkspaceOverview({ project, card, railwaySummary }) {
+function WorkspaceOverview({ project, card }) {
   const quickLinks = buildQuickLinks(project.resources);
   const recentActivity = project.githubSummary.activity;
   const next = buildProjectNextPresentation(card);
@@ -217,6 +268,8 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
               : `Automatic · ${card.phaseReason}`}
           </p>
         </WorkspaceSection>
+
+        <HealthEvidence project={project} />
 
         <WorkspaceSection title="Where we are">
           <p className="text-sm leading-6 text-muted">
@@ -287,7 +340,19 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
           <p className="text-sm font-semibold">{project.githubSummary.issues.label ?? "No GitHub repositories"}</p>
         </aside>
 
-        <RuntimePanel project={project} railwaySummary={railwaySummary} />
+        <aside className="workspace-rail-section">
+          <h3 className="workspace-rail-title">Monitoring</h3>
+          <p className="text-xs leading-5 text-muted">
+            {project.health.monitorCount === 0
+              ? "No enabled resource monitors"
+              : `${project.health.monitorCount} enabled ${project.health.monitorCount === 1 ? "monitor" : "monitors"}`}
+          </p>
+          <HealthMonitorForm
+            slug={project.slug}
+            components={project.components}
+            railwayResources={project.railwayResources}
+          />
+        </aside>
 
         <aside className="workspace-rail-section">
           <h3 className="workspace-rail-title">Quick links</h3>
@@ -305,12 +370,11 @@ function WorkspaceOverview({ project, card, railwaySummary }) {
 export function ProjectWorkspace({
   project,
   card,
-  railwaySummary,
   activeTab,
   projectUpdated = false,
 }) {
   const content = {
-    overview: <WorkspaceOverview project={project} card={card} railwaySummary={railwaySummary} />,
+    overview: <WorkspaceOverview project={project} card={card} />,
     issues: <WorkspaceIssues project={project} />,
     releases: <WorkspaceReleases project={project} />,
     activity: <WorkspaceActivity project={project} />,

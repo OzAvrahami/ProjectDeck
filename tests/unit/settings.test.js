@@ -11,6 +11,7 @@ describe("Settings integration status", () => {
     { provider: "github", resourceType: "repository" },
     { provider: "github", resourceType: "project_board" },
     { provider: "railway", resourceType: "service" },
+    { provider: "vercel", resourceType: "deployment" },
     { provider: null, resourceType: "documentation" },
   ];
 
@@ -23,6 +24,7 @@ describe("Settings integration status", () => {
 
     expect(status.github).toEqual({ configured: true, connectedCount: 2 });
     expect(status.railway).toEqual({ configured: false, connectedCount: 1 });
+    expect(status.vercel).toEqual({ configured: false, connectedCount: 1 });
   });
 
   it("keeps provider configuration independent from connection counts", () => {
@@ -30,10 +32,12 @@ describe("Settings integration status", () => {
       resources: [],
       githubConfigured: true,
       railwayConfigured: true,
+      vercelConfigured: true,
     });
 
     expect(status.github).toEqual({ configured: true, connectedCount: 0 });
     expect(status.railway).toEqual({ configured: true, connectedCount: 0 });
+    expect(status.vercel).toEqual({ configured: true, connectedCount: 0 });
   });
 
   it("does not report zero connections when the database is unavailable", () => {
@@ -45,6 +49,7 @@ describe("Settings integration status", () => {
 
     expect(status.github.connectedCount).toBeNull();
     expect(status.railway.connectedCount).toBeNull();
+    expect(status.vercel.connectedCount).toBeNull();
     expect(connectedResourceLabel(null, "repository")).toBe(
       "Connection count unavailable",
     );

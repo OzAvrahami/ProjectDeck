@@ -5,7 +5,6 @@ import { ProjectWorkspace } from "../../../components/workspace/project-workspac
 import { observeProjectsWithAutomation } from "../../../lib/projects/phase-observations.js";
 import { buildProjectCardViewModel } from "../../../lib/projects/portfolio.js";
 import { getProjectWorkspaceBySlug } from "../../../lib/projects/queries.js";
-import { observeProjectRailway } from "../../../lib/projects/railway-observations.js";
 import { WORKSPACE_TABS } from "../../../lib/projects/navigation.js";
 
 export const dynamic = "force-dynamic";
@@ -40,10 +39,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
     notFound();
   }
 
-  const [observedProjects, railwaySummary] = await Promise.all([
-    observeProjectsWithAutomation([project]),
-    observeProjectRailway(project),
-  ]);
+  const observedProjects = await observeProjectsWithAutomation([project]);
   const [observedProject] = observedProjects;
   const card = buildProjectCardViewModel(observedProject);
 
@@ -52,7 +48,6 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
       <ProjectWorkspace
         project={observedProject}
         card={card}
-        railwaySummary={railwaySummary}
         activeTab={activeTab}
         projectUpdated={projectUpdated}
       />

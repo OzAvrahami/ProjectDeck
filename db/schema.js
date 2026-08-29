@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -119,6 +120,45 @@ export const resources = pgTable(
     uniqueIndex("resources_provider_external_id_unique").on(
       table.provider,
       table.externalId,
+    ),
+  ],
+);
+
+export const resourceMonitors = pgTable(
+  "resource_monitors",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    resourceId: uuid("resource_id").references(() => resources.id, {
+      onDelete: "cascade",
+    }),
+    componentId: uuid("component_id").references(() => components.id, {
+      onDelete: "set null",
+    }),
+    label: varchar("label", { length: 160 }).notNull(),
+    monitorType: varchar("monitor_type", { length: 80 }).notNull(),
+    enabled: boolean("enabled").default(true).notNull(),
+    affectsProjectHealth: boolean("affects_project_health")
+      .default(true)
+      .notNull(),
+    // Configuration is intentionally non-secret. Secret-bearing monitors store
+    // only an environment-variable name, never its value.
+    configuration: jsonb("configuration").default({}).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("resource_monitors_project_id_idx").on(table.projectId),
+    index("resource_monitors_component_id_idx").on(table.componentId),
+    uniqueIndex("resource_monitors_resource_type_unique").on(
+      table.resourceId,
+      table.monitorType,
     ),
   ],
 );

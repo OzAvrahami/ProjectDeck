@@ -15,6 +15,7 @@ ProjectDeck should help the user:
 - see every Planning, Development, Maintenance, Paused, Archived, or Unknown project clearly;
 - understand the current state of a project in human terms;
 - see the strongest current automatic Next action or an explicit manual override;
+- see whether explicitly monitored operational resources are Healthy, Degraded, Down, Unknown, or Not monitored;
 - see what needs attention without scanning every source;
 - understand meaningful recent work rather than raw activity volume;
 - inspect relevant releases, deployments, and issues;
@@ -42,7 +43,9 @@ When no eligible work exists, ProjectDeck says “No clear next action.” When 
 
 Project Phase describes the kind of work a project is currently in: Planning, Development, Maintenance, Paused, or Archived. ProjectDeck synthesizes Phase from read-only GitHub Project workflow, Release, and recent development evidence when it can do so confidently. Unknown is a deliberate automatic result when evidence is unavailable, ambiguous, partial, nonstandard, or contradictory. The user can explicitly override Phase; Paused and Archived require that user intent in v1 and are never inferred from inactivity.
 
-“Needs Attention” is a separate user-owned condition indicating something that may require intervention. Runtime Health is a provider observation. A project may be in Development and also Need Attention, while a failed deployment can affect Health without changing Phase.
+“Needs Attention” is a separate user-owned condition indicating something that may require intervention. Operational Health is synthesized from explicit resource monitors and answers whether the operational part of a Project is working. A Project may be in Development and also Need Attention, while a failed deployment can make Health Down without changing Phase or Next.
+
+Health is provider-agnostic. Railway and Vercel deployment observations, a bounded read-only PostgreSQL connectivity check, and an explicit HTTP/HTTPS health endpoint all normalize into the same resource evidence. Only enabled monitors explicitly marked as affecting Project Health participate in the top-level result. No configured monitor means Not monitored; configured monitoring whose state cannot be established means Unknown.
 
 ### Activity is not automatically progress
 

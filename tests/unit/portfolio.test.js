@@ -93,6 +93,10 @@ describe("Portfolio view model", () => {
     expect(card.releaseSummary).toBeNull();
     expect(card.phase).toBe("development");
     expect(card.phaseSource).toBe("inferred");
+    expect(card.health).toMatchObject({
+      status: "not_monitored",
+      label: "Not monitored",
+    });
     expect(card).not.toHaveProperty("version");
     expect(card).not.toHaveProperty("releaseState");
     expect(buildProjectNextPresentation(card)).toEqual({

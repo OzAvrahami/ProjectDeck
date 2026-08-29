@@ -7,7 +7,6 @@ import {
   railwayDeploymentLabel,
   railwayExternalId,
 } from "../../lib/railway/index.js";
-import { observeProjectRailway } from "../../lib/projects/railway-observations.js";
 
 vi.mock("server-only", () => ({}));
 
@@ -80,18 +79,5 @@ describe("Railway observations", () => {
     ).resolves.toMatchObject({ status: "failed" });
     const request = JSON.parse(fetchImpl.mock.calls[0][1].body);
     expect(request.variables.input).toEqual(identity);
-  });
-
-  it("represents a missing token locally instead of throwing", async () => {
-    const result = await observeProjectRailway(
-      { railwayResources: [railwayResource()] },
-      { token: "", fetchImpl: vi.fn() },
-    );
-
-    expect(result.status).toBe("unavailable");
-    expect(result.items[0]).toMatchObject({
-      status: "unavailable",
-      error: { code: "missing_token" },
-    });
   });
 });

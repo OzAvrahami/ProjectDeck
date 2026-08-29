@@ -4,6 +4,7 @@ import { AppShell } from "../../components/app-shell.js";
 import { isGitHubConfigured } from "../../lib/github/index.js";
 import { listPortfolioProjects } from "../../lib/projects/queries.js";
 import { isRailwayConfigured } from "../../lib/railway/index.js";
+import { isVercelConfigured } from "../../lib/vercel/index.js";
 import {
   buildIntegrationStatus,
   connectedResourceLabel,
@@ -68,6 +69,7 @@ export default async function SettingsPage() {
     resources,
     githubConfigured: isGitHubConfigured(),
     railwayConfigured: isRailwayConfigured(),
+    vercelConfigured: isVercelConfigured(),
     connectionsAvailable,
   });
 
@@ -107,6 +109,17 @@ export default async function SettingsPage() {
                   ? "Manage repositories"
                   : "Scan GitHub"
               }
+            />
+            <IntegrationRow
+              name="Vercel"
+              configured={status.vercel.configured}
+              countLabel={connectedResourceLabel(
+                status.vercel.connectedCount,
+                "deployment resource",
+              )}
+              description="Vercel production monitoring is configured explicitly from the relevant Project Workspace using a stable Project ID."
+              actionHref="/projects"
+              actionLabel="Manage from Projects"
             />
             <IntegrationRow
               name="Railway"

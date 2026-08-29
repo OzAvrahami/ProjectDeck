@@ -133,6 +133,17 @@ export function ProjectCard({ card }) {
         ) : null}
       </div>
 
+      <div className="flex items-center gap-2 font-mono text-[10.5px] text-muted">
+        <span className="uppercase tracking-[0.08em]">Health</span>
+        <span
+          className={`health-dot health-${card.health.status}`}
+          aria-hidden="true"
+        />
+        <span className="font-semibold text-subtle" title={card.health.reason}>
+          {card.health.label}
+        </span>
+      </div>
+
       {metadata.length > 0 ? (
         <p className="flex flex-wrap items-center gap-x-2 font-mono text-xs leading-5 text-muted">
           {metadata.map((item, index) => (
