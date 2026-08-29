@@ -20,7 +20,7 @@ function project(overrides = {}) {
       phase: "development",
       label: "Development",
       source: "inferred",
-      reason: "1 issue In Progress",
+      reason: "unreleased implementation exists",
     },
     needsAttention: false,
     attentionSummary: null,
@@ -43,7 +43,7 @@ describe("Portfolio view model", () => {
           phase: "maintenance",
           label: "Maintenance",
           source: "inferred",
-          reason: "published release exists, no active implementation",
+          reason: "released product with no recent implementation activity",
         },
       }),
     ]);

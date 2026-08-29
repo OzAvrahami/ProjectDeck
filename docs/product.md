@@ -41,7 +41,9 @@ When no eligible work exists, ProjectDeck says “No clear next action.” When 
 
 ### Phase, attention, and health stay separate
 
-Project Phase describes the kind of work a project is currently in: Planning, Development, Maintenance, Paused, or Archived. ProjectDeck synthesizes Phase from read-only GitHub Project workflow, Release, and recent development evidence when it can do so confidently. Unknown is a deliberate automatic result when evidence is unavailable, ambiguous, partial, nonstandard, or contradictory. The user can explicitly override Phase; Paused and Archived require that user intent in v1 and are never inferred from inactivity.
+Project Phase describes the product lifecycle: Planning, Development, Maintenance, Paused, or Archived. ProjectDeck synthesizes Phase from deterministic repository implementation maturity, published GitHub Releases, and bounded file-level implementation activity. GitHub Project work-item Status and Priority do not determine Phase; they belong to automatic Next. Unknown is a deliberate automatic result when required repository or activity evidence is unavailable, partial, or contradictory. The user can explicitly override Phase; Paused and Archived require that user intent in v1 and are never inferred from inactivity.
+
+Planning means connected repositories conclusively contain no meaningful implementation footprint. An unreleased product with an established implementation remains Development even when it has no recent commits. A released product is Development while meaningful implementation files are changing and Maintenance when bounded activity evidence is conclusively inactive. Tags and manifest versions do not establish released maturity; only a published GitHub Release does.
 
 “Needs Attention” is a separate user-owned condition indicating something that may require intervention. Operational Health is synthesized from explicit resource monitors and answers whether the operational part of a Project is working. A Project may be in Development and also Need Attention, while a failed deployment can make Health Down without changing Phase or Next.
 

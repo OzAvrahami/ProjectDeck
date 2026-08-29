@@ -51,6 +51,7 @@ describe("GitHub recent activity", () => {
       author: "Developer",
       committedAt: "2026-08-25T10:00:00Z",
       url: "https://github.com/owner/project/commit/1234567",
+      parentShas: [],
     });
   });
 

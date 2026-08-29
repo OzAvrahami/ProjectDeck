@@ -97,11 +97,13 @@ Cached and manually maintained context should appear immediately. Refreshing one
 
 ## States and feedback
 
-Project Phase uses the plain-language outputs Planning, Development, Maintenance, Paused, Archived, and Unknown. Automatic inference explains itself concisely in the Workspace. Paused and Archived require manual intent in v1. Needs Attention and operational Health remain independent of Phase and Next.
+Project Phase uses the plain-language outputs Planning, Development, Maintenance, Paused, Archived, and Unknown. Automatic inference explains repository lifecycle evidence concisely in the Workspace: implementation has not begun, unreleased implementation exists, a released product has recent implementation activity, or a released product has no recent implementation activity. GitHub Issue Status never appears as a Phase reason. Paused and Archived require manual intent in v1. Needs Attention and operational Health remain independent of Phase and Next.
 
 Operational Health uses Healthy, Degraded, Down, Unknown, and Not monitored. Not monitored means no enabled monitor has been designated to affect top-level Health. Unknown means monitoring exists but its state could not be established. The Workspace retains provider, Resource, Component, observation time, and a concise reason; cards show only the aggregate state.
 
 Automatic Next uses only open Issue items in Standard v1 In Progress, Verify, or Ready states. Backlog alone never becomes Next. Equal Status and Priority candidates resolve deterministically by most recently updated Issue, stable repository identity, then Issue number. Multi-repository cards show Component or repository scope only when needed.
+
+This separation is deliberate: Phase uses implementation maturity, published Releases, and file-level implementation activity; Next uses GitHub Project Status and Priority; Health uses explicitly monitored operational Resources.
 
 - **New project:** explain the few details needed to make the first card useful, centered on identity, automatic Phase, description, next action, components, and resources.
 - **Empty portfolio:** introduce ProjectDeck's purpose and offer one clear create-project action.

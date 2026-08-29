@@ -87,7 +87,8 @@ ProjectDeck owns information the user creates or controls, including:
 External providers remain authoritative for information ProjectDeck observes, including:
 
 - GitHub repository metadata, issues, releases, and repository activity;
-- GitHub Projects v2 workflow fields and Issue items used as read-only Phase and automatic Next evidence;
+- GitHub Projects v2 workflow fields and Issue items used as read-only automatic Next evidence;
+- bounded repository-tree and changed-file observations used for implementation maturity and Phase;
 - Railway and Vercel production deployment state;
 - explicit HTTP endpoint responses and read-only PostgreSQL connectivity results;
 - future Supabase or Neon metadata about monitored projects;
@@ -135,7 +136,11 @@ The MVP reads:
 
 Project resolution uses stable repository identity already stored by the normal `GITHUB_TOKEN` import path. The Projects-only token may hide a private repository node in an otherwise readable Project association; the resolver tolerates that only when the visible stable identities, total repository count, and candidate uniqueness still identify exactly one Project. Zero matches remain unresolved and multiple plausible matches remain ambiguous. Project name matching is not an authority. This supports both one-repository projects and products whose components span several repositories without broadening either token's responsibility.
 
-A deterministic in-process phase service combines the resolved GitHub Project workflow with existing Release and activity observations. It returns the Phase, its source (`override`, `inferred`, or `unknown`), a concise reason, and bounded evidence. The legacy `lifecycle_state` column remains temporarily for backward compatibility, but is not the displayed Phase source. New manual control is stored in nullable `phase_override`; null means Automatic.
+A deterministic in-process phase service combines per-repository implementation maturity, published Release evidence, and bounded changed-file activity. GitHub Project Status and Priority are not Phase inputs. A complete repository tree with no meaningful implementation files establishes `not_started`; a conservative source footprint establishes `implemented`; a published GitHub Release establishes `released`; incomplete or inconclusive evidence remains `unknown`. Common documentation, specifications, design references, repository metadata, lockfiles, generated/vendor output, tests, administrative configuration, and framework-only scaffolds are not strong implementation proof.
+
+Recent implementation activity uses a named 21-day window over at most six default-branch commits. One bounded compare/detail request inspects changed-file paths, so a meaningful source change is recognized without relying on commit-message prefixes, while documentation-only, configuration-only, lockfile-only, design-reference-only, and `.github`-only activity is excluded. Repository observation concurrency is capped at six. Each repository reuses the Release and commit responses already needed by the portfolio; unreleased repositories add one tree request and repositories with recent commits add one changed-file request. No unbounded history scan occurs.
+
+The phase service returns the Phase, its source (`override`, `inferred`, or `unknown`), a concise lifecycle reason, and repository/Component-scoped evidence. Unreleased implemented products remain Development without requiring recent activity. Released products with active implementation are Development; released products with conclusively inactive implementation are Maintenance. All conclusively not-started components mean Planning, while material unknown component evidence produces Unknown. The legacy `lifecycle_state` column remains temporarily for backward compatibility, but is not the displayed Phase source. New manual control is stored in nullable `phase_override`; null means Automatic.
 
 The same batched GitHub Projects catalog and normalized Project read model also power automatic Next; the portfolio does not perform a separate catalog request per card. A non-empty existing `next_action` value is the manual override, while null means Automatic. Eligible open Issues rank by Status (`In Progress`, `Verify`, `Ready`) and then Standard v1 Priority (`P0`, `P1`, `P2`, `P3`, unset). GitHub does not expose a reliable “entered Status at” timestamp, so exact ties use Issue updated time descending, stable repository identity ascending, then Issue number ascending. The result preserves Issue URL, repository identity, and Component context when available.
 
@@ -164,7 +169,7 @@ MVP observations run at request time with a small global concurrency limit and p
 - Never represent unavailable or stale provider data as current.
 - Never infer local branches, uncommitted changes, or workspace cleanliness from remote GitHub state.
 - Do not let one provider failure break the portfolio or unrelated project information.
-- Return Unknown instead of Planning or Maintenance when required Phase evidence is unavailable, partial, ambiguous, nonstandard, or contradictory.
+- Return Unknown instead of Planning or Maintenance when required repository maturity or implementation-activity evidence is unavailable, partial, or contradictory.
 - Keep automatic Next unavailable when required GitHub Project evidence cannot be ranked safely; reserve “No clear next action” for a successfully resolved Project with no eligible open In Progress, Verify, or Ready Issues.
 - Keep Project Phase and automatic Next independent from operational Health; a failed deployment or database check never changes either.
 - Distinguish Not monitored (no enabled health-affecting monitors) from Unknown (monitoring is configured but cannot establish state).

@@ -1,222 +1,240 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  inferProjectPhase,
-  RECENT_DEVELOPMENT_ACTIVITY_DAYS,
-} from "../../lib/projects/phase.js";
+import { inferProjectPhase } from "../../lib/projects/phase.js";
 
-const NOW = new Date("2026-08-28T12:00:00Z");
-
-function item(overrides = {}) {
+function repository({
+  name = "OzAvrahami/projectdeck",
+  component = null,
+  maturity = "implemented",
+  activity = "inactive",
+} = {}) {
   return {
-    id: "issue-id",
-    repository: "OzAvrahami/projectdeck",
-    number: 1,
-    title: "Implement phase",
-    state: "open",
-    labels: ["feature"],
-    updatedAt: "2026-08-28T10:00:00Z",
-    status: "Backlog",
-    priority: "P2 — Medium",
-    statusRecognized: true,
-    priorityRecognized: true,
-    ...overrides,
+    repository: { fullName: name },
+    component: component ? { name: component } : null,
+    maturity: { state: maturity, reason: `${maturity} evidence` },
+    activity: { state: activity, reason: `${activity} evidence` },
   };
 }
 
-function resolved(items = [], repositories = ["OzAvrahami/projectdeck"]) {
-  return {
-    status: "resolved",
-    readModel: {
-      id: "project-id",
-      title: "ProjectDeck Development",
-      url: "https://github.com/users/OzAvrahami/projects/1",
-      linkedRepositories: repositories,
-      statusField: { standard: true, options: ["Backlog", "Ready", "In Progress", "Verify", "Done"] },
-      priorityField: { standard: true, options: ["P0 — Critical", "P1 — High", "P2 — Medium", "P3 — Low"] },
-      items,
-    },
-  };
+function implementation(repositories, status = "complete") {
+  return { status, repositories };
 }
 
-function evidence(overrides = {}) {
-  return {
+function infer(repositories, overrides = {}) {
+  return inferProjectPhase({
     override: null,
-    projectResolution: resolved(),
-    releases: { status: "complete", items: [] },
-    activity: { status: "complete", items: [] },
+    implementation: implementation(repositories),
     ...overrides,
-  };
-}
-
-function infer(overrides = {}) {
-  return inferProjectPhase(evidence(overrides), { now: NOW });
+  });
 }
 
 describe("automatic Project phase", () => {
   it.each(["development", "paused", "archived"])(
     "lets a manual %s override win over provider evidence",
     (override) => {
-      const result = inferProjectPhase({
-        override,
-        projectResolution: { status: "unavailable" },
-      });
-
-      expect(result).toMatchObject({ phase: override, source: "override" });
+      expect(
+        inferProjectPhase({
+          override,
+          implementation: { status: "unavailable", repositories: [] },
+        }),
+      ).toMatchObject({ phase: override, source: "override" });
     },
   );
 
-  it.each(["In Progress", "Verify", "Ready"])(
-    "infers Development from an open %s issue",
+  it.each(["Ready", "In Progress", "Verify"])(
+    "does not let %s work-item Status cause Development",
     (status) => {
       expect(
-        infer({ projectResolution: resolved([item({ status })]) }),
-      ).toMatchObject({ phase: "development", source: "inferred" });
+        infer([repository({ maturity: "not_started" })], {
+          projectResolution: { items: [{ status }] },
+        }).phase,
+      ).toBe("planning");
     },
   );
 
-  it("does not treat Backlog alone as Development", () => {
+  it("does not let Backlog independently establish Planning", () => {
     expect(
-      infer({ projectResolution: resolved([item()]) }).phase,
+      infer([repository({ maturity: "unknown" })], {
+        projectResolution: { items: [{ status: "Backlog" }] },
+      }).phase,
+    ).toBe("unknown");
+  });
+
+  it("never uses Priority for Phase", () => {
+    expect(
+      infer([repository({ maturity: "not_started" })], {
+        projectResolution: {
+          items: [{ status: "Ready", priority: "P0 — Critical" }],
+        },
+      }).phase,
     ).toBe("planning");
   });
 
-  it("infers Maintenance from a published Release without active work", () => {
+  it("infers without GitHub Project resolution", () => {
     expect(
-      infer({
-        projectResolution: resolved([item()]),
-        releases: {
-          status: "complete",
-          items: [{ tagName: "v1.0.0", publishedAt: "2026-08-01T00:00:00Z" }],
-        },
-      }),
-    ).toMatchObject({ phase: "maintenance", source: "inferred" });
-  });
-
-  it("lets active work outrank a published Release", () => {
-    expect(
-      infer({
-        projectResolution: resolved([item({ status: "Ready" })]),
-        releases: {
-          status: "complete",
-          items: [{ tagName: "v1.0.0" }],
-        },
+      inferProjectPhase({
+        implementation: implementation([repository()]),
+        projectResolution: { status: "unresolved" },
       }).phase,
     ).toBe("development");
   });
 
-  it("infers Planning only from an unreleased Backlog with no recent implementation", () => {
-    const result = infer({ projectResolution: resolved([item(), item({ id: "two", number: 2 })]) });
-
-    expect(result).toMatchObject({ phase: "planning", source: "inferred" });
-    expect(result.reason).toContain("2 backlog issues");
+  it("infers Planning when implementation conclusively has not begun", () => {
+    expect(infer([repository({ maturity: "not_started" })])).toMatchObject({
+      phase: "planning",
+      reason: "implementation has not begun",
+    });
   });
 
-  it("uses bounded meaningful activity as Development evidence for an unreleased Project", () => {
-    const committedAt = new Date(
-      NOW.getTime() - (RECENT_DEVELOPMENT_ACTIVITY_DAYS - 1) * 86_400_000,
-    ).toISOString();
-
-    expect(
-      infer({
-        activity: {
-          status: "complete",
-          items: [{ kind: "feat", committedAt, repository: { fullName: "OzAvrahami/projectdeck" } }],
-        },
-      }).phase,
-    ).toBe("development");
-  });
-
-  it.each([
-    {
-      label: "unresolved",
-      projectResolution: { status: "unresolved", reason: "no_match" },
-      reason: "GitHub Project could not be resolved",
-    },
-    {
-      label: "ambiguous",
-      projectResolution: {
-        status: "ambiguous",
-        candidates: [
-          { id: "one", title: "One" },
-          { id: "two", title: "Two" },
-        ],
-      },
-      reason: "Multiple GitHub Projects match connected repositories",
-    },
-    {
-      label: "token missing",
-      projectResolution: {
-        status: "unavailable",
-        error: { code: "token_missing" },
-      },
-      reason: "GitHub Projects token is not configured",
-    },
-    {
-      label: "permission denied",
-      projectResolution: {
-        status: "unavailable",
-        error: { code: "permission_denied" },
-      },
-      reason: "GitHub Projects access is unavailable",
-    },
-  ])(
-    "keeps $label Project evidence distinct while returning Unknown",
-    ({ projectResolution, reason }) => {
-      expect(infer({ projectResolution })).toMatchObject({
-        phase: "unknown",
-        source: "unknown",
-        reason,
-      });
+  it.each(["Ready", "In Progress"])(
+    "keeps a planning repository in Planning with a %s planning item",
+    (status) => {
+      expect(
+        infer([repository({ maturity: "not_started" })], {
+          projectResolution: { items: [{ status }] },
+        }).phase,
+      ).toBe("planning");
     },
   );
 
-  it("returns Unknown when required provider evidence is partial", () => {
+  it("keeps an unreleased implemented repository in Development without recent activity", () => {
+    expect(infer([repository()])).toMatchObject({
+      phase: "development",
+      reason: "unreleased implementation exists",
+    });
+  });
+
+  it("infers Maintenance from a published Release with inactive implementation", () => {
     expect(
-      infer({
-        projectResolution: resolved([item()]),
-        releases: { status: "partial", items: [] },
+      infer([repository({ maturity: "released", activity: "inactive" })]),
+    ).toMatchObject({
+      phase: "maintenance",
+      reason: "released product with no recent implementation activity",
+    });
+  });
+
+  it("returns a released product to Development for real implementation activity", () => {
+    expect(
+      infer([repository({ maturity: "released", activity: "active" })]),
+    ).toMatchObject({
+      phase: "development",
+      reason: "released product has recent implementation activity",
+    });
+  });
+
+  it("keeps a released inactive product in Maintenance despite a Ready Issue", () => {
+    expect(
+      infer([repository({ maturity: "released", activity: "inactive" })], {
+        projectResolution: { items: [{ status: "Ready" }] },
       }).phase,
-    ).toBe("unknown");
+    ).toBe("maintenance");
   });
 
-  it("returns Unknown when an Issue has no Standard v1 Status", () => {
+  it("returns Unknown when repository evidence is unavailable", () => {
     expect(
-      infer({
-        projectResolution: resolved([
-          item({ status: null, statusRecognized: false }),
-        ]),
-      }).phase,
-    ).toBe("unknown");
+      inferProjectPhase({
+        implementation: {
+          status: "unavailable",
+          repositories: [],
+          failures: [{ code: "provider" }],
+        },
+      }),
+    ).toMatchObject({ phase: "unknown", source: "unknown" });
   });
 
-  it("uses visible active work even when optional Project evidence is partial", () => {
-    const projectResolution = resolved([item({ status: "In Progress" })]);
-    projectResolution.readModel.partial = true;
-    projectResolution.readModel.priorityField = {
-      standard: false,
-      options: [],
-    };
-
-    expect(infer({ projectResolution }).phase).toBe("development");
-  });
-
-  it("synthesizes a multi-repository Product as Development when one component is active", () => {
+  it("does not consume Operational Health", () => {
     expect(
-      infer({
-        projectResolution: resolved(
-          [item({ repository: "OzAvrahami/limitpact-website", status: "In Progress" })],
-          ["OzAvrahami/limitpact-desktop", "OzAvrahami/limitpact-website"],
-        ),
+      inferProjectPhase({
+        implementation: implementation([repository()]),
+        health: { status: "down" },
       }).phase,
     ).toBe("development");
   });
 
-  it("never infers Paused or Archived from inactivity", () => {
-    const result = infer({ projectResolution: resolved() });
+  it("synthesizes multi-repository implementation as Development", () => {
+    expect(
+      infer([
+        repository({
+          name: "OzAvrahami/limitpact-desktop",
+          component: "Desktop",
+          maturity: "released",
+        }),
+        repository({
+          name: "OzAvrahami/limitpact-website",
+          component: "Website",
+          maturity: "implemented",
+        }),
+      ]).phase,
+    ).toBe("development");
+  });
 
-    expect(result.phase).toBe("unknown");
+  it("lets active implementation in one released component select Development", () => {
+    expect(
+      infer([
+        repository({ maturity: "released", activity: "inactive" }),
+        repository({
+          name: "OzAvrahami/other",
+          maturity: "released",
+          activity: "active",
+        }),
+      ]).phase,
+    ).toBe("development");
+  });
+
+  it("treats all released inactive components as Maintenance", () => {
+    expect(
+      infer([
+        repository({ maturity: "released", activity: "inactive" }),
+        repository({
+          name: "OzAvrahami/other",
+          maturity: "released",
+          activity: "inactive",
+        }),
+      ]).phase,
+    ).toBe("maintenance");
+  });
+
+  it("handles material unresolved multi-repository evidence conservatively", () => {
+    expect(
+      infer([
+        repository({ maturity: "released", activity: "inactive" }),
+        repository({ name: "OzAvrahami/private", maturity: "unknown" }),
+      ]).phase,
+    ).toBe("unknown");
+  });
+
+  it("does not infer Planning from contradictory not-started activity", () => {
+    expect(
+      infer([
+        repository({ maturity: "not_started", activity: "active" }),
+      ]).phase,
+    ).toBe("unknown");
+  });
+
+  it("never infers Paused or Archived from inactivity", () => {
+    const result = infer([
+      repository({ maturity: "released", activity: "inactive" }),
+    ]);
+
+    expect(result.phase).toBe("maintenance");
     expect(result.phase).not.toBe("paused");
     expect(result.phase).not.toBe("archived");
+  });
+
+  it("keeps the CeliTrip regression fixture out of Development", () => {
+    expect(
+      infer([repository({
+        name: "OzAvrahami/CeliTrip",
+        maturity: "not_started",
+        activity: "inactive",
+      })], {
+        projectResolution: {
+          items: [
+            { status: "Ready", priority: "P1 — High" },
+            { status: "Backlog", priority: "P1 — High" },
+          ],
+        },
+      }).phase,
+    ).toBe("planning");
   });
 });
