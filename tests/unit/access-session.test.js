@@ -100,6 +100,7 @@ describe("route protection decisions", () => {
     expect(isPublicAccessPath("/setup/github")).toBe(false);
     expect(isPublicAccessPath("/settings")).toBe(false);
     expect(isPublicAccessPath("/projects/limitpact/edit")).toBe(false);
+    expect(isPublicAccessPath("/api/integrations/railway/callback")).toBe(false);
   });
 
   it("requires a valid configured session for protected routes", () => {

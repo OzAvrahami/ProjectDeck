@@ -109,6 +109,7 @@ ProjectDeck uses Neon PostgreSQL for its own persistent data and Drizzle for sch
 - Browser code never receives database credentials or connects directly to Neon.
 - Database operations should stay close to the feature or server-side project module that uses them.
 - `resource_monitors` stores enabled state, monitor type, Project/Component/Resource association, health impact, and non-secret configuration. PostgreSQL configuration stores only the name of a server environment variable.
+- `provider_connections` stores provider account identity, granted scopes, selected workspace metadata, connection state, discovery metadata, and an encrypted credential envelope. `provider_resource_associations` stores non-secret stable provider resource IDs and their Project/Component mapping. Credentials and resource IDs are separate concepts.
 
 Drizzle is used because it provides a lightweight schema, migration, and query layer that remains close to SQL. The MVP should not place a generic repository abstraction over every query; abstraction should follow demonstrated repetition or testing needs.
 
@@ -152,14 +153,16 @@ The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a 
 
 Project Health is a provider-agnostic aggregation over explicitly configured resource monitors. Each adapter returns a normalized resource result with status, provider/resource/Component identity, a concise reason, observation time, safe evidence, and a scoped error classification. Main UI composition consumes only normalized `healthy`, `degraded`, `down`, `unknown`, and `not_monitored` states.
 
-- Railway uses an explicitly associated project/environment/service identity. Success/active state is Healthy; failed or crashed is Down; transitional deployment state is Degraded; access or provider failure is Unknown.
+- Railway uses one confidential OAuth connection for all user-selected workspaces. It requests only `openid email profile workspace:viewer offline_access`, uses authorization code + PKCE S256 and `prompt=consent`, and discovers Railway projects, environments, services, source repositories, and deployment observations. The access token stays in bounded process memory; the rotating refresh token is stored only in an AES-256-GCM envelope encrypted with the dedicated environment-held `PROVIDER_CREDENTIALS_ENCRYPTION_KEY`.
+- Railway resource association uses stable IDs and, where available, exact GitHub source repository identity. Exactly one environment named `production` may be selected automatically; ambiguous environment or repository matches require explicit mapping. A connected production service affects Project Health by default but can be made informational.
+- Railway deployment normalization distinguishes the current active deployment from the latest attempt. A successful current/latest deployment is Healthy; a failed latest attempt while an older successful deployment remains active is Degraded; a crashed/unavailable current deployment is Down; building/deploying/queued state is Degraded; connection or provider failure is Unknown. Failed-attempt evidence remains structured for later Needs Attention synthesis.
 - Vercel uses an explicit stable Project ID and optional Team ID. The latest production deployment is observed through the server-side `VERCEL_TOKEN`; ready is Healthy, error/canceled is Down, and building/queued/initializing state is Degraded.
 - PostgreSQL monitoring stores only a server environment-variable name. A short-lived connection performs `SELECT 1`, uses a bounded timeout, and is always closed. A successful check is Healthy, network timeout/unreachability is Down, and missing or rejected configuration is Unknown.
 - HTTP monitoring requires an explicit HTTP/HTTPS endpoint and GET or HEAD. It sends no cookies, credentials, or body, does not follow redirects, and uses a bounded timeout. 2xx is Healthy; a conclusive error response or network failure is Down; invalid configuration or redirect ambiguity is Unknown.
 
 Aggregation considers only enabled monitors marked `affects_project_health`. No such monitors means Not monitored. Any required Down observation makes the Project Down; all Healthy makes it Healthy; all Unknown makes it Unknown; otherwise mixed, partial, or transitional state is Degraded. Component/resource evidence remains available in the Workspace. This contract is intentionally small and extensible without a plugin framework.
 
-MVP observations run at request time with a small global concurrency limit and provider-specific bounded timeouts. Existing Railway calls are reused through the Health adapter rather than duplicated. This is appropriate for the current portfolio; measured latency or scale, not speculation, is the trigger for caching or background observation later.
+MVP observations run at request time with small concurrency limits and provider-specific bounded timeouts. Railway discovery is connection-level rather than repeated per card; discovered metadata is stored locally, refreshed after authorization or on request, and deployment observations use a named 45-second in-process TTL. Service observations remain isolated, so one malformed service does not invalidate other Projects. This is appropriate for the current portfolio; measured latency or scale, not speculation, is the trigger for background observation later.
 
 ## 9. Failure and Freshness Behavior
 
@@ -180,7 +183,7 @@ This requires straightforward timestamps, cached observations, and localized err
 
 ProjectDeck v0.1 is single-user and uses a minimal private-access gate: one server-side password creates a signed, time-limited HttpOnly session cookie. It has no signup, accounts, organizations, roles, or multi-user identity model. Next.js `proxy.js` redirects unauthenticated requests before product routes render, and sensitive Server Actions also verify the session.
 
-Database credentials, GitHub tokens, Railway/Vercel credentials, and monitored PostgreSQL connection strings remain server-side and are supplied through deployment environment variables. Monitor records may reference an environment-variable name but never store its secret value. Sensitive values must not enter client bundles, browser storage, rendered HTML, or routine logs.
+Database credentials, GitHub tokens, Vercel credentials, and monitored PostgreSQL connection strings remain server-side and are supplied through deployment environment variables. Railway OAuth client credentials and the provider-credential encryption key also remain server-only. The Railway refresh token is the sole provider secret persisted by the connection model and is encrypted with AES-256-GCM; access tokens are not persisted. Monitor records may reference an environment-variable name but never store its secret value. Sensitive values must not enter client bundles, browser storage, rendered HTML, or routine logs.
 
 The access gate is suitable only for a private single-user deployment. A public or multi-user product would still require full authentication, authorization, user isolation, and a different provider-credential model.
 
@@ -248,8 +251,8 @@ None of these responses should be built before its trigger exists.
 | Database layer | Drizzle for schema, migrations, and queries |
 | Server API boundary | Server Components and Server Actions by default; Route Handlers only when useful |
 | GitHub connection | Server-side repository PAT plus a read-only Projects v2 PAT |
-| First runtime integration | Railway |
-| Operational Health | Explicit provider-agnostic resource monitors; Railway, Vercel, PostgreSQL, and HTTP in v1 |
+| First runtime integration | Railway provider-level OAuth connection with discovered service associations |
+| Operational Health | Provider-agnostic observations; Railway discovered deployments plus explicit Vercel, PostgreSQL, and HTTP monitors in v1 |
 | Hosting | One Railway service |
 | Authentication | Minimal signed-cookie password gate; no user/account model |
 | Testing | Vitest for focused unit/integration checks; manual browser QA |

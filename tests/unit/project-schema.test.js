@@ -5,6 +5,8 @@ import {
   PROJECT_LIFECYCLE_STATES,
   PROJECT_PHASE_OVERRIDES,
   projects,
+  providerConnections,
+  providerResourceAssociations,
   resources,
 } from "../../db/schema.js";
 
@@ -42,5 +44,18 @@ describe("project schema", () => {
     expect(columns.provider).toBeDefined();
     expect(columns.externalId).toBeDefined();
     expect(columns.externalId.notNull).toBe(false);
+  });
+
+  it("separates provider credentials from non-secret resource associations", () => {
+    const connectionColumns = getTableColumns(providerConnections);
+    const associationColumns = getTableColumns(providerResourceAssociations);
+
+    expect(connectionColumns.encryptedCredentials).toBeDefined();
+    expect(connectionColumns.displayMetadata).toBeDefined();
+    expect(associationColumns.externalId).toBeDefined();
+    expect(associationColumns.affectsProjectHealth).toBeDefined();
+    expect(associationColumns.metadata).toBeDefined();
+    expect(associationColumns).not.toHaveProperty("accessToken");
+    expect(associationColumns).not.toHaveProperty("refreshToken");
   });
 });

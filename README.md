@@ -14,9 +14,9 @@ The current single-user MVP includes:
 - searchable and filterable Projects;
 - project workspaces with Overview, Issues, Releases, Activity, and Docs;
 - editing for ProjectDeck-owned project details, including a manual Phase override, separate attention context, next action, and accent;
-- a small Settings surface for integration status and clear GitHub/Railway management paths;
+- a small Settings surface for GitHub management and a one-time, read-only Railway OAuth connection;
 - read-only GitHub repository discovery/import plus cross-project Activity, Releases, and Issues views;
-- explicit Railway service association with latest deployment state in Project Workspace;
+- Railway workspace/project/service discovery with exact repository matching, explicit fallback mapping, and deployment Health in Project Workspace;
 - project-level modeling of components, repositories, deployments, documentation, and links;
 - deterministic Project Phase synthesis from read-only GitHub evidence, with an explicit manual override, plus manually maintained next actions;
 - dark and light themes with project-specific accents.

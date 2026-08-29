@@ -29,6 +29,13 @@
       "when": 1788009351790,
       "tag": "0003_small_scream",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788027060608,
+      "tag": "0004_square_magik",
+      "breakpoints": true
     }
   ]
 }

@@ -296,4 +296,49 @@ describe("Project Health observation orchestration", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(observed.health.status).toBe("not_monitored");
   });
+
+  it("does not double-count a legacy Railway monitor matched by a provider association", async () => {
+    const legacyFetch = vi.fn();
+    const [observed] = await observeProjectsHealth(
+      [{
+        id: "project",
+        healthMonitors: [monitor({
+          monitorType: "railway_deployment",
+          resource: {
+            id: "legacy",
+            provider: "railway",
+            externalId: "railway-project:production:web",
+            label: "Legacy Web",
+            url: "https://railway.com",
+          },
+        })],
+        providerAssociations: [{
+          id: "managed",
+          providerConnectionId: "connection",
+          projectId: "project",
+          providerResourceType: "service_environment",
+          externalId: "workspace:railway-project:production:web",
+          displayName: "ProjectDeck · production · Web",
+          enabled: true,
+          affectsProjectHealth: true,
+          metadata: { projectId: "railway-project", environmentId: "production", serviceId: "web" },
+        }],
+      }],
+      {
+        fetchImpl: legacyFetch,
+        railwayConnection: {
+          connection: { id: "connection", connectionState: "connected" },
+          getAccessToken: vi.fn().mockResolvedValue("access"),
+          fetchDeploymentState: vi.fn().mockResolvedValue({
+            deployments: [{ id: "current", status: "success" }],
+            activeDeployment: { id: "current", status: "success" },
+          }),
+        },
+      },
+    );
+
+    expect(legacyFetch).not.toHaveBeenCalled();
+    expect(observed.health.observations).toHaveLength(1);
+    expect(observed.health.observations[0].monitor.providerManaged).toBe(true);
+  });
 });

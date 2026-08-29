@@ -162,3 +162,83 @@ export const resourceMonitors = pgTable(
     ),
   ],
 );
+
+export const providerConnections = pgTable(
+  "provider_connections",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    provider: varchar("provider", { length: 80 }).notNull(),
+    providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+    displayName: varchar("display_name", { length: 255 }),
+    connectionState: varchar("connection_state", { length: 40 })
+      .default("connected")
+      .notNull(),
+    grantedScopes: jsonb("granted_scopes").default([]).notNull(),
+    selectedWorkspaces: jsonb("selected_workspaces").default([]).notNull(),
+    // Only an AES-256-GCM encrypted envelope is stored here. Provider tokens
+    // are never stored in plaintext or mixed into display metadata.
+    encryptedCredentials: jsonb("encrypted_credentials"),
+    displayMetadata: jsonb("display_metadata").default({}).notNull(),
+    lastDiscoveredAt: timestamp("last_discovered_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("provider_connections_provider_account_unique").on(
+      table.provider,
+      table.providerAccountId,
+    ),
+    index("provider_connections_provider_state_idx").on(
+      table.provider,
+      table.connectionState,
+    ),
+  ],
+);
+
+export const providerResourceAssociations = pgTable(
+  "provider_resource_associations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    providerConnectionId: uuid("provider_connection_id")
+      .notNull()
+      .references(() => providerConnections.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    componentId: uuid("component_id").references(() => components.id, {
+      onDelete: "set null",
+    }),
+    providerResourceType: varchar("provider_resource_type", { length: 80 })
+      .notNull(),
+    externalId: varchar("external_id", { length: 512 }).notNull(),
+    displayName: varchar("display_name", { length: 255 }).notNull(),
+    associationSource: varchar("association_source", { length: 40 })
+      .default("manual")
+      .notNull(),
+    enabled: boolean("enabled").default(true).notNull(),
+    affectsProjectHealth: boolean("affects_project_health")
+      .default(true)
+      .notNull(),
+    // Stable provider IDs, names, and source repository identity only.
+    // Credentials are prohibited from this non-secret metadata object.
+    metadata: jsonb("metadata").default({}).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("provider_resource_associations_connection_external_unique").on(
+      table.providerConnectionId,
+      table.externalId,
+    ),
+    index("provider_resource_associations_project_idx").on(table.projectId),
+    index("provider_resource_associations_component_idx").on(table.componentId),
+  ],
+);

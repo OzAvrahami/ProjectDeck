@@ -9,6 +9,10 @@ import {
   getProjectWorkspaceBySlug,
   updateResourceMonitorState,
 } from "../../../lib/projects/queries.js";
+import {
+  associateDiscoveredRailwayResource,
+} from "../../../lib/railway/connection.js";
+import { updateProviderResourceAssociation } from "../../../lib/provider-connections/queries.js";
 import { validateHealthMonitorInput } from "../../../lib/projects/health-monitor-config.js";
 
 function field(formData, name) {
@@ -122,5 +126,47 @@ export async function updateHealthMonitorAction(formData) {
     revalidatePath("/projects");
   } catch {
     // The server-rendered view remains the source of truth after a failed edit.
+  }
+}
+
+export async function associateRailwayResourceAction(formData) {
+  await requireAccessSession();
+  const slug = field(formData, "slug");
+  try {
+    const project = await getProjectWorkspaceBySlug(slug);
+    if (!project) return;
+    await associateDiscoveredRailwayResource({
+      project,
+      externalId: field(formData, "externalId"),
+      componentId: field(formData, "componentId") || null,
+      affectsProjectHealth: field(formData, "affectsProjectHealth") !== "false",
+    });
+    revalidatePath(`/projects/${slug}`);
+    revalidatePath("/");
+    revalidatePath("/projects");
+    revalidatePath("/settings");
+  } catch {
+    // The next server render remains authoritative after a failed mapping.
+  }
+}
+
+export async function updateRailwayAssociationAction(formData) {
+  await requireAccessSession();
+  const slug = field(formData, "slug");
+  try {
+    const project = await getProjectWorkspaceBySlug(slug);
+    if (!project) return;
+    const associationId = field(formData, "associationId");
+    const association = project.providerAssociations.find(({ id }) => id === associationId);
+    if (!association) return;
+    await updateProviderResourceAssociation(associationId, project.id, {
+      enabled: field(formData, "enabled") === "true",
+      affectsProjectHealth: field(formData, "affectsProjectHealth") === "true",
+    });
+    revalidatePath(`/projects/${slug}`);
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch {
+    // The next server render remains authoritative after a failed edit.
   }
 }

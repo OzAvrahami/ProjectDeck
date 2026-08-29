@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   fetchLatestRailwayDeployment,
+  fetchRailwayDeploymentState,
   normalizeRailwayDeployment,
   parseRailwayResource,
   railwayDeploymentLabel,
@@ -79,5 +80,24 @@ describe("Railway observations", () => {
     ).resolves.toMatchObject({ status: "failed" });
     const request = JSON.parse(fetchImpl.mock.calls[0][1].body);
     expect(request.variables.input).toEqual(identity);
+  });
+
+  it("reads recent and currently active production deployments in one query", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        data: {
+          recent: { edges: [{ node: { id: "failed", ...identity, status: "FAILED" } }] },
+          active: { edges: [{ node: { id: "active", ...identity, status: "SUCCESS" } }] },
+        },
+      }), { status: 200 }),
+    );
+    const state = await fetchRailwayDeploymentState(identity, {
+      token: "token",
+      fetchImpl,
+    });
+    expect(state.deployments[0].status).toBe("failed");
+    expect(state.activeDeployment.status).toBe("success");
+    const request = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(request.variables.activeInput.status).toEqual({ successfulOnly: true });
   });
 });

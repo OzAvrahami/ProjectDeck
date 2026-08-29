@@ -3,7 +3,8 @@ import Link from "next/link";
 import { AppShell } from "../../components/app-shell.js";
 import { isGitHubConfigured } from "../../lib/github/index.js";
 import { listPortfolioProjects } from "../../lib/projects/queries.js";
-import { isRailwayConfigured } from "../../lib/railway/index.js";
+import { getRailwayIntegrationView } from "../../lib/railway/connection.js";
+import { isRailwayOAuthConfigured } from "../../lib/railway/oauth.js";
 import { isVercelConfigured } from "../../lib/vercel/index.js";
 import {
   buildIntegrationStatus,
@@ -12,14 +13,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function ConfigurationState({ configured }) {
+function ConfigurationState({ configured, label = null }) {
   return (
     <span className="flex items-center gap-2 text-xs font-semibold text-subtle">
       <span
         className={`h-1.5 w-1.5 rounded-full ${configured ? "bg-ready" : "bg-muted"}`}
         aria-hidden="true"
       />
-      {configured ? "Configured" : "Configuration required"}
+      {label ?? (configured ? "Configured" : "Configuration required")}
     </span>
   );
 }
@@ -54,13 +55,94 @@ function IntegrationRow({
   );
 }
 
-export default async function SettingsPage() {
+function RailwayIntegration({ integration, configured }) {
+  const connection = integration?.connection ?? null;
+  const connected = connection?.connectionState === "connected";
+  const reconnectRequired = connection?.connectionState === "reconnect_required";
+  const workspaces = connection?.selectedWorkspaces ?? [];
+
+  return (
+    <article className="border-t border-line py-6 last:pb-0" id="railway">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-xl">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-base font-semibold">Railway</h3>
+            <ConfigurationState
+              configured={connected}
+              label={connected ? "Connected" : reconnectRequired ? "Reconnect required" : "Not connected"}
+            />
+          </div>
+          <p className="mt-2 font-mono text-[11px] text-muted">
+            {connected
+              ? `${integration.counts.projects} projects · ${integration.counts.services} services discovered`
+              : reconnectRequired
+                ? "Connection requires authorization"
+                : "Not connected"}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-subtle">
+            Connect once with read-only workspace access. ProjectDeck discovers
+            Railway projects, production environments, services, and deployment
+            state across the portfolio.
+          </p>
+          {connected ? (
+            <>
+              <p className="mt-3 text-xs text-subtle">
+                {workspaces.length === 1 ? "Workspace" : "Workspaces"}: {workspaces.map(({ name }) => name).join(", ") || "Selected in Railway"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {integration.associations.length} mapped · {integration.unmapped.length} unmapped service environments
+              </p>
+            </>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {connected ? (
+            <>
+              <form action="/api/integrations/railway/refresh" method="post">
+                <button className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" type="submit">Refresh discovery</button>
+              </form>
+              <Link className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" href="/projects">Manage mappings</Link>
+              <a className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" href="/api/integrations/railway/connect">Reconnect</a>
+              <form action="/api/integrations/railway/disconnect" method="post">
+                <button className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold text-muted hover:border-attention" type="submit">Disconnect</button>
+              </form>
+            </>
+          ) : configured ? (
+            <a className="inline-flex rounded-lg border border-line bg-background px-4 py-2.5 text-sm font-semibold hover:border-accent" href="/api/integrations/railway/connect">
+              {reconnectRequired ? "Reconnect Railway" : "Connect Railway"}
+            </a>
+          ) : (
+            <span className="rounded-lg border border-line px-4 py-2.5 text-xs text-muted">OAuth configuration required</span>
+          )}
+        </div>
+      </div>
+      {connected && integration.unmapped.length > 0 ? (
+        <div className="mt-5 rounded-xl border border-line-soft bg-background p-4">
+          <p className="text-xs font-semibold">Unmapped Railway resources</p>
+          <ul className="mt-2 space-y-1 font-mono text-[10.5px] text-muted">
+            {integration.unmapped.slice(0, 8).map((resource) => (
+              <li key={resource.externalId}>{resource.projectName} · {resource.environmentName} · {resource.serviceName}</li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs leading-5 text-subtle">Open the matching Project Workspace to associate a discovered service explicitly.</p>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+export default async function SettingsPage({ searchParams }) {
   let resources = [];
   let connectionsAvailable = true;
+  let railwayIntegration = null;
 
   try {
-    const projects = await listPortfolioProjects();
+    const [projects, integration] = await Promise.all([
+      listPortfolioProjects(),
+      getRailwayIntegrationView(),
+    ]);
     resources = projects.flatMap((project) => project.resources);
+    railwayIntegration = integration;
   } catch {
     connectionsAvailable = false;
   }
@@ -68,10 +150,20 @@ export default async function SettingsPage() {
   const status = buildIntegrationStatus({
     resources,
     githubConfigured: isGitHubConfigured(),
-    railwayConfigured: isRailwayConfigured(),
+    railwayConfigured: railwayIntegration?.connection?.connectionState === "connected",
     vercelConfigured: isVercelConfigured(),
     connectionsAvailable,
   });
+  const query = await searchParams;
+  const railwayMessage = {
+    connected: "Railway connected and resources discovered.",
+    refreshed: "Railway discovery refreshed.",
+    disconnected: "Railway disconnected. Existing mappings were preserved.",
+    configuration_required: "Railway OAuth server configuration is incomplete.",
+    oauth_rejected: "Railway authorization was not completed.",
+    connection_failed: "Railway connection could not be completed.",
+    refresh_failed: "Railway discovery could not be refreshed; reconnect if the problem continues.",
+  }[query?.railway];
 
   return (
     <AppShell>
@@ -95,6 +187,9 @@ export default async function SettingsPage() {
             Integrations
           </h2>
           <div className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-[var(--card-shadow)] sm:p-6">
+            {railwayMessage ? (
+              <p className="mb-5 rounded-lg border border-line bg-background px-3 py-2 text-xs leading-5 text-subtle" role="status">{railwayMessage}</p>
+            ) : null}
             <IntegrationRow
               name="GitHub"
               configured={status.github.configured}
@@ -121,17 +216,7 @@ export default async function SettingsPage() {
               actionHref="/projects"
               actionLabel="Manage from Projects"
             />
-            <IntegrationRow
-              name="Railway"
-              configured={status.railway.configured}
-              countLabel={connectedResourceLabel(
-                status.railway.connectedCount,
-                "runtime resource",
-              )}
-              description="Railway services are connected explicitly from the relevant Project Workspace, with optional Component scope."
-              actionHref="/projects"
-              actionLabel="Manage from Projects"
-            />
+            <RailwayIntegration integration={railwayIntegration} configured={isRailwayOAuthConfigured()} />
           </div>
           {!status.connectionsAvailable ? (
             <p className="mt-3 text-xs leading-5 text-muted">

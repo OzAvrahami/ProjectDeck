@@ -6,9 +6,8 @@ import { createHealthMonitorAction } from "../../app/projects/[slug]/actions.js"
 
 const INITIAL_STATE = { status: "idle", message: null, errors: {} };
 
-export function HealthMonitorForm({ slug, components, railwayResources }) {
+export function HealthMonitorForm({ slug, components }) {
   const [type, setType] = useState("none");
-  const [existingRailway, setExistingRailway] = useState("");
   const [state, action, pending] = useActionState(
     createHealthMonitorAction,
     INITIAL_STATE,
@@ -30,7 +29,6 @@ export function HealthMonitorForm({ slug, components, railwayResources }) {
             onChange={(event) => setType(event.target.value)}
           >
             <option value="none">None</option>
-            <option value="railway_deployment">Railway deployment</option>
             <option value="vercel_deployment">Vercel deployment</option>
             <option value="http">HTTP endpoint</option>
             <option value="postgres">PostgreSQL</option>
@@ -61,34 +59,6 @@ export function HealthMonitorForm({ slug, components, railwayResources }) {
                 <option value="false">No</option>
               </select>
             </label>
-          </>
-        ) : null}
-
-        {type === "railway_deployment" ? (
-          <>
-            {railwayResources.length > 0 ? (
-              <label className="block text-xs text-muted">
-                Existing Railway resource (optional)
-                <select
-                  className="workspace-input"
-                  name="existingResourceId"
-                  value={existingRailway}
-                  onChange={(event) => setExistingRailway(event.target.value)}
-                >
-                  <option value="">Connect a new service</option>
-                  {railwayResources.map((resource) => (
-                    <option key={resource.id} value={resource.id}>{resource.label}</option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {!existingRailway ? (
-              <>
-                <label className="block text-xs text-muted">Railway project ID<input className="workspace-input font-mono" name="railwayProjectId" required /></label>
-                <label className="block text-xs text-muted">Environment ID<input className="workspace-input font-mono" name="environmentId" required /></label>
-                <label className="block text-xs text-muted">Service ID<input className="workspace-input font-mono" name="serviceId" required /></label>
-              </>
-            ) : null}
           </>
         ) : null}
 
@@ -128,4 +98,3 @@ export function HealthMonitorForm({ slug, components, railwayResources }) {
     </details>
   );
 }
-

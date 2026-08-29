@@ -11,7 +11,11 @@ import {
   buildQuickLinks,
   listDocumentationResources,
 } from "../../lib/projects/workspace.js";
-import { updateHealthMonitorAction } from "../../app/projects/[slug]/actions.js";
+import {
+  associateRailwayResourceAction,
+  updateHealthMonitorAction,
+  updateRailwayAssociationAction,
+} from "../../app/projects/[slug]/actions.js";
 import { HealthMonitorForm } from "./health-monitor-form.js";
 
 const GITHUB_FAILURE_LABELS = {
@@ -214,23 +218,26 @@ function HealthEvidence({ project }) {
                     ) : null}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-subtle">{observation.reason}</p>
+                  {observation.monitor.legacy ? (
+                    <p className="mt-1 font-mono text-[10px] text-muted">Legacy manual Railway monitor</p>
+                  ) : null}
                   {observation.observedAt ? (
                     <p className="mt-1 font-mono text-[10px] text-muted">Observed {formatRelativeTime(observation.observedAt)}</p>
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <form action={updateHealthMonitorAction}>
+                  <form action={observation.monitor.providerManaged ? updateRailwayAssociationAction : updateHealthMonitorAction}>
                     <input type="hidden" name="slug" value={project.slug} />
-                    <input type="hidden" name="monitorId" value={observation.monitor.id} />
+                    <input type="hidden" name={observation.monitor.providerManaged ? "associationId" : "monitorId"} value={observation.monitor.id} />
                     <input type="hidden" name="enabled" value={String(!observation.monitor.enabled)} />
                     <input type="hidden" name="affectsProjectHealth" value={String(observation.monitor.affectsProjectHealth)} />
                     <button className="rounded-md border border-line px-2.5 py-1.5 text-[11px] font-semibold hover:border-accent" type="submit">
                       {observation.monitor.enabled ? "Disable" : "Enable"}
                     </button>
                   </form>
-                  <form action={updateHealthMonitorAction}>
+                  <form action={observation.monitor.providerManaged ? updateRailwayAssociationAction : updateHealthMonitorAction}>
                     <input type="hidden" name="slug" value={project.slug} />
-                    <input type="hidden" name="monitorId" value={observation.monitor.id} />
+                    <input type="hidden" name={observation.monitor.providerManaged ? "associationId" : "monitorId"} value={observation.monitor.id} />
                     <input type="hidden" name="enabled" value={String(observation.monitor.enabled)} />
                     <input type="hidden" name="affectsProjectHealth" value={String(!observation.monitor.affectsProjectHealth)} />
                     <button className="rounded-md border border-line px-2.5 py-1.5 text-[11px] font-semibold hover:border-accent" type="submit">
@@ -249,7 +256,74 @@ function HealthEvidence({ project }) {
   );
 }
 
-function WorkspaceOverview({ project, card }) {
+function RailwayMapping({ project, integration }) {
+  const connection = integration?.connection;
+  const connected = connection?.connectionState === "connected";
+  const mapped = (integration?.associations ?? []).filter(
+    ({ projectId }) => projectId === project.id,
+  );
+
+  return (
+    <div className="mt-5 border-t border-line-soft pt-4">
+      <p className="text-xs font-semibold text-subtle">Railway</p>
+      {!connected ? (
+        <p className="mt-2 text-xs leading-5 text-muted">
+          Not connected. <Link className="font-semibold text-foreground hover:text-accent" href="/settings#railway">Connect Railway in Settings.</Link>
+        </p>
+      ) : (
+        <>
+          {mapped.length > 0 ? (
+            <ul className="mt-2 space-y-2 text-xs text-subtle">
+              {mapped.map((association) => (
+                <li key={association.id}>
+                  <span className="font-semibold">{association.displayName}</span>
+                  <span className="ml-2 font-mono text-[9px] uppercase tracking-wide text-muted">
+                    {association.associationSource === "automatic" ? "Automatically matched" : "Manual mapping"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-xs text-muted">No automatic match</p>
+          )}
+          {(integration.unmapped ?? []).length > 0 ? (
+            <details className="mt-3">
+              <summary className="cursor-pointer text-xs font-semibold text-subtle hover:text-foreground">Associate Railway service</summary>
+              <form action={associateRailwayResourceAction} className="mt-3 space-y-3">
+                <input type="hidden" name="slug" value={project.slug} />
+                <label className="block text-xs text-muted">
+                  Discovered service
+                  <select className="workspace-input" name="externalId" required defaultValue="">
+                    <option value="" disabled>Select Project · Environment · Service</option>
+                    {integration.unmapped.map((resource) => (
+                      <option key={resource.externalId} value={resource.externalId}>{resource.projectName} · {resource.environmentName} · {resource.serviceName}</option>
+                    ))}
+                  </select>
+                </label>
+                {project.components.length > 0 ? (
+                  <label className="block text-xs text-muted">
+                    Component (optional)
+                    <select className="workspace-input" name="componentId" defaultValue="">
+                      <option value="">Project level</option>
+                      {project.components.map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}
+                    </select>
+                  </label>
+                ) : null}
+                <label className="block text-xs text-muted">
+                  Affects Project Health
+                  <select className="workspace-input" name="affectsProjectHealth" defaultValue="true"><option value="true">Yes</option><option value="false">No</option></select>
+                </label>
+                <button className="workspace-button" type="submit">Associate service</button>
+              </form>
+            </details>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function WorkspaceOverview({ project, card, railwayIntegration }) {
   const quickLinks = buildQuickLinks(project.resources);
   const recentActivity = project.githubSummary.activity;
   const next = buildProjectNextPresentation(card);
@@ -350,8 +424,8 @@ function WorkspaceOverview({ project, card }) {
           <HealthMonitorForm
             slug={project.slug}
             components={project.components}
-            railwayResources={project.railwayResources}
           />
+          <RailwayMapping project={project} integration={railwayIntegration} />
         </aside>
 
         <aside className="workspace-rail-section">
@@ -372,9 +446,10 @@ export function ProjectWorkspace({
   card,
   activeTab,
   projectUpdated = false,
+  railwayIntegration = null,
 }) {
   const content = {
-    overview: <WorkspaceOverview project={project} card={card} />,
+    overview: <WorkspaceOverview project={project} card={card} railwayIntegration={railwayIntegration} />,
     issues: <WorkspaceIssues project={project} />,
     releases: <WorkspaceReleases project={project} />,
     activity: <WorkspaceActivity project={project} />,

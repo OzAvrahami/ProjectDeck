@@ -47,7 +47,7 @@ Planning means connected repositories conclusively contain no meaningful impleme
 
 “Needs Attention” is a separate user-owned condition indicating something that may require intervention. Operational Health is synthesized from explicit resource monitors and answers whether the operational part of a Project is working. A Project may be in Development and also Need Attention, while a failed deployment can make Health Down without changing Phase or Next.
 
-Health is provider-agnostic. Railway and Vercel deployment observations, a bounded read-only PostgreSQL connectivity check, and an explicit HTTP/HTTPS health endpoint all normalize into the same resource evidence. Only enabled monitors explicitly marked as affecting Project Health participate in the top-level result. No configured monitor means Not monitored; configured monitoring whose state cannot be established means Unknown.
+Health is provider-agnostic. Railway and Vercel deployment observations, a bounded read-only PostgreSQL connectivity check, and an explicit HTTP/HTTPS health endpoint all normalize into the same resource evidence. Railway is connected once at provider level through read-only OAuth; authorized workspaces, projects, environments, services, and deployment state are discovered for the whole portfolio. Exact GitHub source identity can associate a production service automatically, while ambiguous resources require explicit mapping. Only enabled observations explicitly marked as affecting Project Health participate in the top-level result. No configured observation means Not monitored; configured monitoring whose state cannot be established means Unknown.
 
 ### Activity is not automatically progress
 
