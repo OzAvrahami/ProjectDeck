@@ -16,6 +16,7 @@ import {
   updateHealthMonitorAction,
   updateRailwayAssociationAction,
 } from "../../app/projects/[slug]/actions.js";
+import { RAILWAY_MAPPINGS_PATH } from "../../lib/railway/routes.js";
 import { HealthMonitorForm } from "./health-monitor-form.js";
 
 const GITHUB_FAILURE_LABELS = {
@@ -317,6 +318,9 @@ function RailwayMapping({ project, integration }) {
               </form>
             </details>
           ) : null}
+          <p className="mt-3 text-xs text-muted">
+            <Link className="font-semibold text-subtle hover:text-foreground" href={RAILWAY_MAPPINGS_PATH}>Manage all Railway mappings →</Link>
+          </p>
         </>
       )}
     </div>

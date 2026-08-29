@@ -5,6 +5,7 @@ import { isGitHubConfigured } from "../../lib/github/index.js";
 import { listPortfolioProjects } from "../../lib/projects/queries.js";
 import { getRailwayIntegrationView } from "../../lib/railway/connection.js";
 import { isRailwayOAuthConfigured } from "../../lib/railway/oauth.js";
+import { RAILWAY_MAPPINGS_PATH } from "../../lib/railway/routes.js";
 import { isVercelConfigured } from "../../lib/vercel/index.js";
 import {
   buildIntegrationStatus,
@@ -101,7 +102,7 @@ function RailwayIntegration({ integration, configured }) {
               <form action="/api/integrations/railway/refresh" method="post">
                 <button className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" type="submit">Refresh discovery</button>
               </form>
-              <Link className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" href="/projects">Manage mappings</Link>
+              <Link className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" href={RAILWAY_MAPPINGS_PATH}>Manage mappings · {integration.unmapped.length} unmapped</Link>
               <a className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold hover:border-accent" href="/api/integrations/railway/connect">Reconnect</a>
               <form action="/api/integrations/railway/disconnect" method="post">
                 <button className="rounded-lg border border-line bg-background px-3.5 py-2 text-xs font-semibold text-muted hover:border-attention" type="submit">Disconnect</button>
@@ -124,7 +125,7 @@ function RailwayIntegration({ integration, configured }) {
               <li key={resource.externalId}>{resource.projectName} · {resource.environmentName} · {resource.serviceName}</li>
             ))}
           </ul>
-          <p className="mt-3 text-xs leading-5 text-subtle">Open the matching Project Workspace to associate a discovered service explicitly.</p>
+          <p className="mt-3 text-xs leading-5 text-subtle">Review and associate every discovered service from the central Railway mappings page.</p>
         </div>
       ) : null}
     </article>
