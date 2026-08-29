@@ -126,7 +126,7 @@ The MVP reads:
 - a small recent commit window as observed repository activity.
 - user-owned GitHub Projects v2, their linked repositories, and Standard v1 Status/Priority Issue signals through a separate read-only `GITHUB_PROJECTS_TOKEN`.
 
-Project resolution uses connected repository identity. Exactly one GitHub Project must match the complete connected repository set; zero matches remain unresolved and multiple plausible matches remain ambiguous. Project name matching is not an authority. This supports both one-repository projects and products whose components span several repositories.
+Project resolution uses stable repository identity already stored by the normal `GITHUB_TOKEN` import path. The Projects-only token may hide a private repository node in an otherwise readable Project association; the resolver tolerates that only when the visible stable identities, total repository count, and candidate uniqueness still identify exactly one Project. Zero matches remain unresolved and multiple plausible matches remain ambiguous. Project name matching is not an authority. This supports both one-repository projects and products whose components span several repositories without broadening either token's responsibility.
 
 A deterministic in-process phase service combines the resolved GitHub Project workflow with existing Release and activity observations. It returns the Phase, its source (`override`, `inferred`, or `unknown`), a concise reason, and bounded evidence. The legacy `lifecycle_state` column remains temporarily for backward compatibility, but is not the displayed Phase source. New manual control is stored in nullable `phase_override`; null means Automatic.
 

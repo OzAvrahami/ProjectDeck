@@ -128,15 +128,48 @@ describe("automatic Project phase", () => {
   });
 
   it.each([
-    [{ status: "unresolved", reason: "no_match" }, "unresolved"],
-    [{ status: "ambiguous", candidates: [{ id: "one", title: "One" }, { id: "two", title: "Two" }] }, "ambiguous"],
-    [{ status: "unavailable", error: { code: "missing_token" } }, "unavailable"],
-  ])("returns Unknown when GitHub Project evidence is %s", (projectResolution) => {
-    expect(infer({ projectResolution })).toMatchObject({
-      phase: "unknown",
-      source: "unknown",
-    });
-  });
+    {
+      label: "unresolved",
+      projectResolution: { status: "unresolved", reason: "no_match" },
+      reason: "GitHub Project could not be resolved",
+    },
+    {
+      label: "ambiguous",
+      projectResolution: {
+        status: "ambiguous",
+        candidates: [
+          { id: "one", title: "One" },
+          { id: "two", title: "Two" },
+        ],
+      },
+      reason: "Multiple GitHub Projects match connected repositories",
+    },
+    {
+      label: "token missing",
+      projectResolution: {
+        status: "unavailable",
+        error: { code: "token_missing" },
+      },
+      reason: "GitHub Projects token is not configured",
+    },
+    {
+      label: "permission denied",
+      projectResolution: {
+        status: "unavailable",
+        error: { code: "permission_denied" },
+      },
+      reason: "GitHub Projects access is unavailable",
+    },
+  ])(
+    "keeps $label Project evidence distinct while returning Unknown",
+    ({ projectResolution, reason }) => {
+      expect(infer({ projectResolution })).toMatchObject({
+        phase: "unknown",
+        source: "unknown",
+        reason,
+      });
+    },
+  );
 
   it("returns Unknown when required provider evidence is partial", () => {
     expect(
@@ -155,6 +188,17 @@ describe("automatic Project phase", () => {
         ]),
       }).phase,
     ).toBe("unknown");
+  });
+
+  it("uses visible active work even when optional Project evidence is partial", () => {
+    const projectResolution = resolved([item({ status: "In Progress" })]);
+    projectResolution.readModel.partial = true;
+    projectResolution.readModel.priorityField = {
+      standard: false,
+      options: [],
+    };
+
+    expect(infer({ projectResolution }).phase).toBe("development");
   });
 
   it("synthesizes a multi-repository Product as Development when one component is active", () => {
