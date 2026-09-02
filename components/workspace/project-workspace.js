@@ -220,7 +220,11 @@ function HealthEvidence({ project }) {
                   </p>
                   <p className="mt-2 text-xs leading-5 text-subtle">{observation.reason}</p>
                   {observation.monitor.legacy ? (
-                    <p className="mt-1 font-mono text-[10px] text-muted">Legacy manual Railway monitor</p>
+                    <p className="mt-1 font-mono text-[10px] text-muted">
+                      {observation.monitor.monitorType === "vercel_deployment"
+                        ? "Legacy / deprecated manual Vercel monitor"
+                        : "Legacy manual Railway monitor"}
+                    </p>
                   ) : null}
                   {observation.observedAt ? (
                     <p className="mt-1 font-mono text-[10px] text-muted">Observed {formatRelativeTime(observation.observedAt)}</p>

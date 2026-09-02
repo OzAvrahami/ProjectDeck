@@ -223,6 +223,39 @@ describe("Health provider normalization", () => {
     expect(String(fetchImpl.mock.calls[0][0])).toContain("target=production");
   });
 
+  it("keeps an existing Vercel deployment monitor observable and marks it legacy", async () => {
+    const [observed] = await observeProjectsHealth(
+      [{
+        id: "project",
+        healthMonitors: [monitor({
+          monitorType: "vercel_deployment",
+          configuration: { projectId: "prj_legacy" },
+        })],
+      }],
+      {
+        vercelToken: "legacy-token",
+        fetchImpl: vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({
+            deployments: [{
+              uid: "deployment",
+              readyState: "READY",
+              target: "production",
+            }],
+          }), { status: 200 }),
+        ),
+      },
+    );
+
+    expect(observed.health.status).toBe("healthy");
+    expect(observed.health.observations[0]).toMatchObject({
+      provider: "vercel",
+      monitor: {
+        monitorType: "vercel_deployment",
+        legacy: true,
+      },
+    });
+  });
+
   it("treats HTTP 2xx as Healthy, HTTP 500 as Down, and a timeout as Down", async () => {
     const healthyFetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     await expect(

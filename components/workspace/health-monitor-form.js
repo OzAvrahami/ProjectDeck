@@ -29,7 +29,6 @@ export function HealthMonitorForm({ slug, components }) {
             onChange={(event) => setType(event.target.value)}
           >
             <option value="none">None</option>
-            <option value="vercel_deployment">Vercel deployment</option>
             <option value="http">HTTP endpoint</option>
             <option value="postgres">PostgreSQL</option>
           </select>
@@ -59,13 +58,6 @@ export function HealthMonitorForm({ slug, components }) {
                 <option value="false">No</option>
               </select>
             </label>
-          </>
-        ) : null}
-
-        {type === "vercel_deployment" ? (
-          <>
-            <label className="block text-xs text-muted">Vercel Project ID<input className="workspace-input font-mono" name="vercelProjectId" required /></label>
-            <label className="block text-xs text-muted">Team ID (optional)<input className="workspace-input font-mono" name="vercelTeamId" /></label>
           </>
         ) : null}
 

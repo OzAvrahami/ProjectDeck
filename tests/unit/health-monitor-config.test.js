@@ -41,6 +41,21 @@ describe("Health monitor configuration", () => {
     ).toBe(false);
   });
 
+  it("does not accept new legacy Vercel deployment monitors", () => {
+    const result = validateHealthMonitorInput(
+      {
+        monitorType: "vercel_deployment",
+        label: "Legacy deployment",
+        vercelProjectId: "prj_legacy",
+        vercelTeamId: "team_legacy",
+      },
+      project,
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.monitorType).toBeDefined();
+  });
+
   it("can monitor an existing Railway association without recreating it", () => {
     const result = validateHealthMonitorInput(
       {
@@ -72,4 +87,3 @@ describe("Health monitor configuration", () => {
     expect(result.errors.componentId).toBeDefined();
   });
 });
-
