@@ -94,8 +94,10 @@ describe("single-user access session", () => {
 });
 
 describe("route protection decisions", () => {
-  it("excludes only the login route from product protection", () => {
+  it("excludes only login and the exact liveness endpoint from product protection", () => {
     expect(isPublicAccessPath("/login")).toBe(true);
+    expect(isPublicAccessPath("/api/health")).toBe(true);
+    expect(isPublicAccessPath("/api/health/details")).toBe(false);
     expect(isPublicAccessPath("/")).toBe(false);
     expect(isPublicAccessPath("/setup/github")).toBe(false);
     expect(isPublicAccessPath("/settings")).toBe(false);
@@ -112,6 +114,12 @@ describe("route protection decisions", () => {
     ).toBe("redirect_login");
     expect(
       accessDecision({ pathname: "/issues", configured: false, sessionValid: false }),
+    ).toBe("redirect_login");
+    expect(
+      accessDecision({ pathname: "/settings", configured: true, sessionValid: false }),
+    ).toBe("redirect_login");
+    expect(
+      accessDecision({ pathname: "/api/integrations/railway/callback", configured: true, sessionValid: false }),
     ).toBe("redirect_login");
   });
 

@@ -73,6 +73,30 @@ describe("Project Health aggregation", () => {
     ).toBe("down");
   });
 
+  it("keeps HTTP failure independent from healthy PostgreSQL and Railway evidence", () => {
+    const httpDown = observation("down", {
+      monitor: { id: "http", monitorType: "http" },
+    });
+    const postgresHealthy = observation("healthy", {
+      monitor: { id: "postgres", monitorType: "postgres" },
+    });
+    const railwayHealthy = observation("healthy", {
+      monitor: {
+        id: "railway",
+        monitorType: "railway_deployment",
+        resource: { provider: "railway" },
+      },
+    });
+
+    const databaseResult = aggregateProjectHealth([postgresHealthy, httpDown]);
+    expect(databaseResult.status).toBe("down");
+    expect(databaseResult.observations).toEqual([postgresHealthy, httpDown]);
+
+    const railwayResult = aggregateProjectHealth([railwayHealthy, httpDown]);
+    expect(railwayResult.status).toBe("down");
+    expect(railwayResult.observations).toEqual([railwayHealthy, httpDown]);
+  });
+
   it("returns Degraded for transitional or mixed conclusive/unknown state", () => {
     expect(
       aggregateProjectHealth([
@@ -199,12 +223,23 @@ describe("Health provider normalization", () => {
     expect(String(fetchImpl.mock.calls[0][0])).toContain("target=production");
   });
 
-  it("treats HTTP 2xx as Healthy and a network timeout as Down", async () => {
+  it("treats HTTP 2xx as Healthy, HTTP 500 as Down, and a timeout as Down", async () => {
+    const healthyFetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(
+      observeHttpHealth(monitor(), { fetchImpl: healthyFetch }),
+    ).resolves.toMatchObject({ status: "healthy" });
+    expect(healthyFetch.mock.calls[0][1]).toMatchObject({
+      method: "GET",
+      credentials: "omit",
+      redirect: "manual",
+    });
+    expect(healthyFetch.mock.calls[0][1].body).toBeUndefined();
+
     await expect(
       observeHttpHealth(monitor(), {
-        fetchImpl: vi.fn().mockResolvedValue(new Response(null, { status: 204 })),
+        fetchImpl: vi.fn().mockResolvedValue(new Response(null, { status: 500 })),
       }),
-    ).resolves.toMatchObject({ status: "healthy" });
+    ).resolves.toMatchObject({ status: "down", evidence: { statusCode: 500 } });
 
     const timeout = new Error("timed out");
     timeout.name = "TimeoutError";
