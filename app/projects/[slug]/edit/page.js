@@ -5,6 +5,7 @@ import { AppShell } from "../../../../components/app-shell.js";
 import { ProjectEditForm } from "../../../../components/projects/project-edit-form.js";
 import {
   PROJECT_ACCENT_OPTIONS,
+  PROJECT_ATTENTION_MODE_OPTIONS,
   PROJECT_EDIT_LIMITS,
   PROJECT_NEXT_MODE_OPTIONS,
   PROJECT_PHASE_OPTIONS,
@@ -65,6 +66,7 @@ export default async function EditProjectPage({ params }) {
         <ProjectEditForm
           project={project}
           accentOptions={PROJECT_ACCENT_OPTIONS}
+          attentionModeOptions={PROJECT_ATTENTION_MODE_OPTIONS}
           phaseOptions={PROJECT_PHASE_OPTIONS}
           nextModeOptions={PROJECT_NEXT_MODE_OPTIONS}
           limits={PROJECT_EDIT_LIMITS}

@@ -56,6 +56,25 @@ describe("Portfolio view model", () => {
     });
   });
 
+  it("uses synthesized attention rather than only the stored manual flag", () => {
+    const summary = summarizePortfolio([
+      project({
+        needsAttention: false,
+        attention: {
+          needs_attention: true,
+          source: "automatic",
+          severity: "high",
+          primary_reason: "Latest Railway production deployment failed",
+          reasons: [],
+        },
+      }),
+      project({ id: "clear" }),
+    ]);
+
+    expect(summary.attentionCount).toBe(1);
+    expect(summary.label).toContain("1 needs attention");
+  });
+
   it("derives deterministic marks from names", () => {
     expect(deriveProjectMark("LimitPact")).toBe("LP");
     expect(deriveProjectMark("Finance Tracker")).toBe("FT");

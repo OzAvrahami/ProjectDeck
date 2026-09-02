@@ -22,7 +22,7 @@ export async function updateProjectAction(_previousState, formData) {
     name: field(formData, "name"),
     tagline: field(formData, "tagline"),
     phaseOverride: field(formData, "phaseOverride"),
-    needsAttention: field(formData, "needsAttention"),
+    attentionMode: field(formData, "attentionMode"),
     attentionSummary: field(formData, "attentionSummary"),
     nextActionMode: field(formData, "nextActionMode"),
     nextAction: field(formData, "nextAction"),

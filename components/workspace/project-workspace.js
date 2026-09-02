@@ -184,6 +184,10 @@ function providerLabel(provider) {
   }[provider] ?? provider;
 }
 
+function attentionValueLabel(value) {
+  return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "Unknown";
+}
+
 function HealthEvidence({ project }) {
   const health = project.health;
 
@@ -388,11 +392,38 @@ function WorkspaceOverview({ project, card, railwayIntegration }) {
         <WorkspaceSection title="Needs attention">
           {card.needsAttention ? (
             <div className="rounded-xl border border-line bg-surface p-5">
-              <span className="attention-pill">Needs Attention</span>
-              <p className="mt-3 text-sm leading-6 text-subtle">{card.attentionSummary ?? "Attention is marked, but no summary has been recorded."}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="attention-pill">Needs Attention</span>
+                <span className="font-mono text-[10px] uppercase tracking-wide text-muted">
+                  Yes · {attentionValueLabel(card.attention.source)} · {attentionValueLabel(card.attention.severity)}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold leading-6 text-subtle">{card.attention.primary_reason}</p>
+              {card.attention.reasons.length > 0 ? (
+                <ul className="mt-4 divide-y divide-line-soft border-y border-line-soft">
+                  {card.attention.reasons.map((reason, index) => (
+                    <li className="py-3" key={`${reason.code}:${reason.resource?.externalId ?? reason.evidence?.issue_number ?? index}`}>
+                      <p className="text-xs font-semibold text-subtle">{reason.reason}</p>
+                      {[reason.component?.name, providerLabel(reason.provider), reason.resource?.label]
+                        .filter(Boolean).length > 0 ? (
+                        <p className="mt-1 font-mono text-[10px] text-muted">
+                          {[reason.component?.name, providerLabel(reason.provider), reason.resource?.label]
+                            .filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
+                      {reason.evidence?.active_deployment_id ? (
+                        <p className="mt-1 text-[10px] leading-4 text-muted">An older production deployment remains active.</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           ) : (
-            <p className="text-sm leading-6 text-muted">No explicit attention condition is set.</p>
+            <div>
+              <p className="text-sm font-semibold text-subtle">No</p>
+              <p className="mt-1 text-xs leading-5 text-muted">{card.attention.primary_reason}.</p>
+            </div>
           )}
         </WorkspaceSection>
 

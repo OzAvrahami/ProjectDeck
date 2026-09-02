@@ -26,6 +26,7 @@ function describedBy(helpId, errorId, error) {
 export function ProjectEditForm({
   project,
   accentOptions,
+  attentionModeOptions,
   phaseOptions,
   nextModeOptions,
   limits,
@@ -35,8 +36,8 @@ export function ProjectEditForm({
     INITIAL_STATE,
   );
   const values = state.values ?? project;
-  const [needsAttention, setNeedsAttention] = useState(
-    Boolean(values.needsAttention),
+  const [attentionMode, setAttentionMode] = useState(
+    values.needsAttention ? "force" : "automatic",
   );
   const [nextMode, setNextMode] = useState(
     values.nextAction ? "manual" : "automatic",
@@ -131,25 +132,32 @@ export function ProjectEditForm({
           <legend className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
             Attention
           </legend>
-          <label className="mt-5 flex items-start gap-3">
-            <input
-              className="mt-1 h-4 w-4 accent-[var(--attention)]"
-              type="checkbox"
-              name="needsAttention"
-              checked={needsAttention}
-              onChange={(event) => setNeedsAttention(event.target.checked)}
-            />
-            <span>
-              <span className="block text-sm font-semibold">Needs Attention</span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
-                Mark an explicit intervention condition without changing phase.
-              </span>
-            </span>
-          </label>
+          <div className="mt-5">
+            <label className="block text-sm font-semibold" htmlFor="attention-mode">
+              Attention mode
+            </label>
+            <select
+              className="mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm"
+              id="attention-mode"
+              name="attentionMode"
+              value={attentionMode}
+              onChange={(event) => setAttentionMode(event.target.value)}
+              aria-invalid={Boolean(errors.attentionMode)}
+              aria-describedby={errors.attentionMode ? "attention-mode-error" : "attention-mode-help"}
+            >
+              {attentionModeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs leading-5 text-muted" id="attention-mode-help">
+              Automatic uses Health and active high-priority bug evidence. Force Needs Attention is a manual override. Returning to Automatic clears the saved manual reason.
+            </p>
+            <FieldError id="attention-mode-error" message={errors.attentionMode} />
+          </div>
 
-          <div className={`mt-5 ${needsAttention ? "" : "hidden"}`}>
+          <div className={`mt-5 ${attentionMode === "force" ? "" : "hidden"}`}>
             <label className="block text-sm font-semibold" htmlFor="attention-summary">
-              Attention summary <span className="font-normal text-muted">optional</span>
+              Manual reason <span className="font-normal text-muted">optional</span>
             </label>
             <textarea
               className="mt-2 min-h-24 w-full resize-y rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm leading-6"
@@ -157,7 +165,7 @@ export function ProjectEditForm({
               name="attentionSummary"
               maxLength={limits.attentionSummary}
               defaultValue={values.attentionSummary ?? ""}
-              disabled={!needsAttention}
+              disabled={attentionMode !== "force"}
               placeholder="What currently requires intervention?"
               aria-invalid={Boolean(errors.attentionSummary)}
               aria-describedby={errors.attentionSummary ? "attention-summary-error" : undefined}

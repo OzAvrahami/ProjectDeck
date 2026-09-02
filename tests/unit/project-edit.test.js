@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PROJECT_PHASE_OVERRIDES } from "../../db/schema.js";
 import {
   PROJECT_ACCENT_OPTIONS,
+  PROJECT_ATTENTION_MODE_OPTIONS,
   PROJECT_EDIT_LIMITS,
   validateProjectEdit,
 } from "../../lib/projects/edit.js";
@@ -95,6 +96,42 @@ describe("Project edit validation", () => {
       needsAttention: true,
       attentionSummary: "Production import is currently broken",
     });
+  });
+
+  it("models manual attention as Automatic or Force Needs Attention", () => {
+    expect(PROJECT_ATTENTION_MODE_OPTIONS).toEqual([
+      { value: "automatic", label: "Automatic" },
+      { value: "force", label: "Force Needs Attention" },
+    ]);
+
+    const forced = validateProjectEdit(validInput({
+      attentionMode: "force",
+      attentionSummary: "  Prepare production migration  ",
+    }));
+    expect(forced.values).toMatchObject({
+      attentionMode: "force",
+      needsAttention: true,
+      attentionSummary: "Prepare production migration",
+    });
+
+    const automatic = validateProjectEdit(validInput({
+      attentionMode: "automatic",
+      needsAttention: true,
+      attentionSummary: "Clear this manual reason",
+    }));
+    expect(automatic.values).toMatchObject({
+      attentionMode: "automatic",
+      needsAttention: false,
+      attentionSummary: null,
+    });
+  });
+
+  it("rejects an unknown attention mode", () => {
+    const result = validateProjectEdit(validInput({ attentionMode: "suppress" }));
+    expect(result.valid).toBe(false);
+    expect(result.errors.attentionMode).toBe(
+      "Choose Automatic or Force Needs Attention.",
+    );
   });
 
   it("requires a sensible display name and validates text limits", () => {

@@ -96,6 +96,12 @@ export function ProjectCard({ card }) {
         </div>
       </div>
 
+      {card.needsAttention ? (
+        <p className="-mt-3 text-xs font-medium leading-5 text-attention">
+          {card.attention.primary_reason}
+        </p>
+      ) : null}
+
       <div>
         <div className="mb-1.5 flex items-center gap-1.5">
           <span className="project-next-mark" aria-hidden="true" />

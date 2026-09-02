@@ -43,6 +43,27 @@ describe("Project phase observation failures", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it("can share workflow evidence with Attention even when Next is manual", async () => {
+    const evidence = await observeProjectPhaseEvidence(
+      [{
+        id: "project-id",
+        phaseOverride: "paused",
+        nextAction: "Ship the build",
+        githubRepositories: [{
+          provider: "github",
+          resourceType: "repository",
+          url: "https://github.com/OzAvrahami/projectdeck",
+        }],
+      }],
+      { token: "", includeManualProjects: true },
+    );
+
+    expect(evidence.get("project-id")).toMatchObject({
+      status: "unavailable",
+      error: { code: "token_missing" },
+    });
+  });
+
   it("resolves Project v2 data when a private connected repository is hidden from the Projects token", async () => {
     const fetchImpl = vi.fn(async (_url, options) => {
       const { query } = JSON.parse(options.body);
