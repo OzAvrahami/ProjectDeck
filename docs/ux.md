@@ -32,17 +32,20 @@ The main visual object is a responsive grid of project cards. Cards carry enough
 
 Every card follows the same reading order:
 
-1. project identity;
-2. synthesized Project Phase;
-3. compact operational Health;
-4. short description;
-5. **Next**;
-6. version, issues, and components;
-7. recent meaningful work.
+1. project identity and short description;
+2. synthesized Project Phase and compact operational Health;
+3. Needs Attention, only when an intervention signal exists;
+4. **Next**;
+5. authoritative Release and Issue context;
+6. Latest Commit.
 
 “Next” is visually important because it connects portfolio understanding to useful action. It is automatic by default, selected from open GitHub Project work in In Progress, Verify, then Ready order; Priority breaks ties only within a Status. A manual override is labeled subtly and always wins until cleared. “No clear next action” means the resolved workflow has no eligible Issue, while “Unavailable” means ProjectDeck could not establish the answer. Secondary facts should support Next rather than compete with it. Project-specific accents improve recognition without changing the meaning of common states.
 
+Project identity uses the persisted name, optional clamped tagline, accent color, and a monogram fallback. ProjectDeck does not infer a logo from GitHub or provider avatars; a real logo requires a future explicit identity source. Long names, taglines, Next titles, attention reasons, and commit subjects are line-clamped with the full value retained as accessible context. Cards use a bounded minimum height, while the grid stretches cards only within each row rather than reserving an empty attention area.
+
 Phase, Health, Next, and attention remain separate: Phase communicates lifecycle, Next selects work, Health reports operational state, and Needs Attention surfaces strong intervention signals. A card may show a Project in Development with Health Down and automatically synthesized Needs Attention. Degraded does not always require attention; ordinary deployment transitions remain quiet. Health is compact and always uses plain text in addition to color. Inferred Phase is shown plainly; a manual override receives a subtle indicator, and Unknown remains visible rather than being hidden.
+
+Low-value empty states are grouped rather than stacked: Release and Issues share one compact metadata row, and absent Component lists are omitted. Unknown Phase, Health states, Next unavailability, provider-unavailable summaries, and partial-data markers remain visible because hiding them would change meaning. Multi-repository scope is shown only on Release or Latest Commit evidence when a Project-level interpretation would be unsafe.
 
 Selecting a card opens its Project Workspace. Links or controls inside a card must have clear, non-overlapping targets and predictable keyboard focus.
 
