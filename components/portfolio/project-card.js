@@ -19,9 +19,7 @@ export function ProjectCard({ card }) {
     ? `${card.lastWorkedLabel ? `${card.lastWorkedLabel} — ` : ""}${card.lastMeaningfulWorkSummary}`
     : card.lastWorkedLabel
       ? `Last worked ${card.lastWorkedLabel}`
-      : card.recentActivity
-        ? `Recent: ${card.recentActivity.message}`
-        : null;
+      : null;
   const metadata = [
     card.releaseSummary
       ? {
@@ -199,10 +197,30 @@ export function ProjectCard({ card }) {
         </p>
       ) : null}
 
-      {lastWorkText ? (
-        <p className="mt-auto border-t border-line-soft pt-3 text-xs leading-5 text-muted">
-          {lastWorkText}
-        </p>
+      {card.latestCommit?.visible ? (
+        <div className="mt-auto border-t border-line-soft pt-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+            Latest commit
+            {card.latestCommit.relativeLabel ? ` · ${card.latestCommit.relativeLabel}` : ""}
+          </p>
+          {card.latestCommit.commit?.url ? (
+            <a
+              className="project-card-secondary-link mt-1 block text-xs font-medium leading-5 text-subtle hover:text-[var(--project-color)] hover:underline"
+              href={card.latestCommit.commit.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {card.latestCommit.scopeLabel ? `${card.latestCommit.scopeLabel} · ` : ""}
+              {card.latestCommit.subject}
+            </a>
+          ) : (
+            <p className="mt-1 text-xs leading-5 text-muted">
+              {card.latestCommit.subject}
+            </p>
+          )}
+        </div>
+      ) : lastWorkText ? (
+        <p className="mt-auto border-t border-line-soft pt-3 text-xs leading-5 text-muted">{lastWorkText}</p>
       ) : null}
     </article>
   );

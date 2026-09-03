@@ -54,4 +54,10 @@ describe("Project card Issue navigation", () => {
     expect(workspaceSource).toContain("Recorded app version");
     expect(workspaceSource).toContain("not a published GitHub Release");
   });
+
+  it("uses explicit Latest commit language and links directly without nesting", () => {
+    expect(cardSource).toContain("Latest commit");
+    expect(cardSource).toContain("card.latestCommit.commit.url");
+    expect(cardSource).not.toContain("Recent:");
+  });
 });

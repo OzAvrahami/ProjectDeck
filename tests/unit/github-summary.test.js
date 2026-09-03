@@ -51,6 +51,21 @@ function release(
   };
 }
 
+function commit(id, committedAt, overrides = {}) {
+  return {
+    id,
+    sha: id,
+    shortSha: id.slice(0, 7),
+    subject: `docs: commit ${id}`,
+    message: `docs: commit ${id}`,
+    repository: { name: "desktop", fullName: "example/desktop" },
+    repositoryDisplayName: "desktop",
+    committedAt,
+    url: `https://github.com/example/desktop/commit/${id}`,
+    ...overrides,
+  };
+}
+
 function observation(overrides = {}) {
   return {
     projectId: "project-id",
@@ -465,7 +480,9 @@ describe("Project GitHub aggregation", () => {
             {
               id: "older",
               sha: "older",
-              message: "Older",
+              subject: "docs: Older",
+              message: "docs: Older",
+              repository: { name: "desktop", fullName: "example/desktop" },
               committedAt: "2026-08-24T10:00:00Z",
             },
           ],
@@ -488,8 +505,95 @@ describe("Project GitHub aggregation", () => {
       failedRepositoryCount: 1,
     });
     expect(summary.activity.items[0]).toMatchObject({
-      message: "Older",
+      subject: "docs: Older",
       scopeLabel: "Desktop",
+    });
+    expect(summary.activity).toMatchObject({
+      state: "partial",
+      latestCommit: {
+        subject: "docs: Older",
+        component: { name: "Desktop" },
+        repository: { fullName: "example/desktop" },
+      },
+    });
+  });
+
+  it("selects the newest Project commit by timestamp, not response order", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        activity: {
+          status: "success",
+          items: [
+            commit("older", "2026-09-01T10:00:00Z"),
+            commit("newer", "2026-09-03T10:00:00Z"),
+          ],
+        },
+      }),
+      observation({
+        resourceId: "website",
+        repository: { name: "website", fullName: "example/website" },
+        componentId: "website-component",
+        componentName: "Website",
+        activity: {
+          status: "success",
+          items: [commit("middle", "2026-09-02T10:00:00Z", {
+            repository: { name: "website", fullName: "example/website" },
+            repositoryDisplayName: "website",
+          })],
+        },
+      }),
+    ]);
+
+    expect(summary.activity).toMatchObject({
+      state: "exact",
+      latestCommit: {
+        sha: "newer",
+        subject: "docs: commit newer",
+        component: { name: "Desktop" },
+        repository: { fullName: "example/desktop" },
+      },
+    });
+  });
+
+  it("falls back to repository identity when the latest commit has no Component", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        componentId: null,
+        componentName: null,
+        activity: {
+          status: "success",
+          items: [commit("latest", "2026-09-03T10:00:00Z")],
+        },
+      }),
+    ]);
+
+    expect(summary.activity.latestCommit).toMatchObject({
+      component: null,
+      repository: { name: "desktop", fullName: "example/desktop" },
+    });
+  });
+
+  it("distinguishes unavailable, no repository, and successful no-commit states", () => {
+    const unavailable = summarizeProjectGitHub(project(), [observation({
+      activity: {
+        status: "unavailable",
+        error: { code: "provider", message: "Unavailable" },
+      },
+    })]);
+    const noRepository = summarizeProjectGitHub(project(), []);
+    const noCommits = summarizeProjectGitHub(project(), [observation()]);
+
+    expect(unavailable.activity).toMatchObject({
+      state: "unavailable",
+      latestCommit: null,
+    });
+    expect(noRepository.activity).toMatchObject({
+      state: "not_connected",
+      latestCommit: null,
+    });
+    expect(noCommits.activity).toMatchObject({
+      state: "exact",
+      latestCommit: null,
     });
   });
 });

@@ -187,13 +187,13 @@ function WorkspaceActivity({ project }) {
   const summary = project.githubSummary.activity;
 
   return (
-    <WorkspaceSection title="Activity" description="Observed development activity from recent GitHub commits.">
-      <ProviderNote summary={summary} subject="Activity" />
+    <WorkspaceSection title="Commits" description="Repository commits with Component scope, timestamp, SHA, and GitHub link.">
+      <ProviderNote summary={summary} subject="Commit activity" />
       {summary.items.length > 0 ? (
         <ActivityRows items={summary.items} compact />
       ) : (
         <WorkspaceEmpty
-          title={summary.status === "unavailable" ? "Activity unavailable" : "No recent development activity"}
+          title={summary.status === "unavailable" ? "Commit activity unavailable" : "No commit activity"}
           message="ProjectDeck does not convert commit volume into progress or intent."
         />
       )}
@@ -493,9 +493,9 @@ function WorkspaceOverview({ project, card, railwayIntegration }) {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="Recent work" description="Observed GitHub commits are repository activity, not inferred progress.">
-          <ProviderNote summary={recentActivity} subject="Activity" />
-          {recentActivity.items.length > 0 ? <ActivityRows items={recentActivity.items.slice(0, 6)} compact /> : <WorkspaceEmpty title={recentActivity.status === "unavailable" ? "Activity unavailable" : "No recent development activity"} message="No verified recent commits are available for connected repositories." />}
+        <WorkspaceSection title="Commits" description="Latest repository commits are general activity; Phase uses separate file-level implementation evidence.">
+          <ProviderNote summary={recentActivity} subject="Commit activity" />
+          {recentActivity.items.length > 0 ? <ActivityRows items={recentActivity.items.slice(0, 6)} compact /> : <WorkspaceEmpty title={recentActivity.status === "unavailable" ? "Commit activity unavailable" : "No commit activity"} message="No verified recent commits are available for connected repositories." />}
         </WorkspaceSection>
       </div>
 

@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildProjectCardViewModel,
+  buildLatestCommitPresentation,
   buildProjectNextPresentation,
   deriveProjectMark,
   selectContinueProject,
   filterProjectCards,
+  formatCompactRelativeTime,
   summarizePortfolio,
 } from "../../lib/projects/portfolio.js";
 
@@ -243,26 +245,119 @@ describe("Portfolio view model", () => {
     expect(filterProjectCards(cards, { phase: "maintenance" })[0].needsAttention).toBe(false);
   });
 
-  it("uses observed Activity only as explicitly labeled recent context", () => {
+  it("uses observed Activity as explicit Latest Commit context", () => {
     const card = buildProjectCardViewModel(
       project({
         githubSummary: {
           activity: {
+            state: "exact",
+            latestCommit: {
+              sha: "abc1234",
+              subject: "docs: Repair card hierarchy",
+              message: "docs: Repair card hierarchy",
+              committedAt: "2026-08-25T10:00:00Z",
+              repository: {
+                name: "limitpact-desktop",
+                fullName: "example/limitpact-desktop",
+              },
+              component: null,
+              url: "https://github.com/example/limitpact-desktop/commit/abc1234",
+            },
             items: [
               {
-                message: "Repair card hierarchy",
+                message: "docs: Repair card hierarchy",
                 committedAt: "2026-08-25T10:00:00Z",
               },
             ],
           },
         },
       }),
+      new Date("2026-08-25T10:00:30Z"),
     );
 
-    expect(card.recentActivity).toEqual({
-      message: "Repair card hierarchy",
-      committedAt: "2026-08-25T10:00:00Z",
+    expect(card.latestCommit).toMatchObject({
+      state: "exact",
+      visible: true,
+      subject: "docs: Repair card hierarchy",
+      relativeLabel: "just now",
+      scopeLabel: null,
+      commit: {
+        sha: "abc1234",
+        repositoryDisplayName: "limitpact-desktop",
+      },
     });
     expect(card.lastWorkedLabel).toBeNull();
+  });
+
+  it.each([
+    ["2026-09-03T11:48:00Z", "12m ago"],
+    ["2026-09-03T08:00:00Z", "4h ago"],
+    ["2026-08-31T12:00:00Z", "3d ago"],
+    ["2026-08-13T12:00:00Z", "3w ago"],
+  ])("formats %s as compact relative time", (timestamp, expected) => {
+    expect(formatCompactRelativeTime(
+      timestamp,
+      new Date("2026-09-03T12:00:00Z"),
+    )).toBe(expected);
+  });
+
+  it("marks a known multi-repository commit as partial and retains Component scope", () => {
+    const presentation = buildLatestCommitPresentation(
+      {
+        state: "partial",
+        latestCommit: {
+          sha: "abc",
+          subject: "fix: checkout redirect",
+          committedAt: "2026-09-03T11:30:00Z",
+          repository: { name: "website", fullName: "example/website" },
+          component: { id: "website", name: "Website" },
+          url: "https://github.com/example/website/commit/abc",
+        },
+      },
+      2,
+      new Date("2026-09-03T12:00:00Z"),
+    );
+
+    expect(presentation).toMatchObject({
+      state: "partial",
+      subject: "fix: checkout redirect",
+      relativeLabel: "partial",
+      scopeLabel: "Website",
+      commit: {
+        repository: { fullName: "example/website" },
+        component: { name: "Website" },
+      },
+    });
+  });
+
+  it("falls back to a repository label for a multi-repository commit", () => {
+    expect(buildLatestCommitPresentation({
+      state: "exact",
+      latestCommit: {
+        sha: "abc",
+        subject: "chore: update tooling",
+        committedAt: "2026-09-03T11:00:00Z",
+        repository: { name: "desktop", fullName: "example/desktop" },
+        url: "https://github.com/example/desktop/commit/abc",
+      },
+    }, 2, new Date("2026-09-03T12:00:00Z"))).toMatchObject({
+      relativeLabel: "1h ago",
+      scopeLabel: "desktop",
+    });
+  });
+
+  it("keeps unavailable, no repository, and no activity distinct", () => {
+    expect(buildLatestCommitPresentation({ state: "unavailable" }, 1)).toMatchObject({
+      visible: true,
+      subject: "Latest commit unavailable",
+    });
+    expect(buildLatestCommitPresentation({ state: "not_connected" }, 0)).toMatchObject({
+      visible: false,
+      subject: "No GitHub repository",
+    });
+    expect(buildLatestCommitPresentation({ state: "exact", latestCommit: null }, 1)).toMatchObject({
+      visible: true,
+      subject: "No commit activity",
+    });
   });
 });

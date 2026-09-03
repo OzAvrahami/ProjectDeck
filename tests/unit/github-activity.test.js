@@ -6,6 +6,7 @@ import {
   formatCommitMessage,
   normalizeGitHubCommit,
 } from "../../lib/github/commits.js";
+import { observeProjectsGitHub } from "../../lib/projects/github-observations.js";
 
 vi.mock("server-only", () => ({}));
 
@@ -31,9 +32,9 @@ function commit(overrides = {}) {
 }
 
 describe("GitHub recent activity", () => {
-  it("formats only the first line and strips conventional prefixes", () => {
+  it("uses only the first line while preserving conventional prefixes", () => {
     expect(formatCommitMessage("feat(api)!: ship a change\nmore")).toBe(
-      "ship a change",
+      "feat(api)!: ship a change",
     );
     expect(formatCommitMessage("plain commit")).toBe("plain commit");
     expect(detectCommitKind("feat(api)!: ship a change")).toBe("feat");
@@ -45,14 +46,45 @@ describe("GitHub recent activity", () => {
       id: "1234567890abcdef",
       sha: "1234567890abcdef",
       shortSha: "1234567",
-      message: "repair Project card",
+      subject: "fix(ui): repair Project card",
+      message: "fix(ui): repair Project card",
       kind: "fix",
       repository,
+      repositoryDisplayName: "project",
       author: "Developer",
       committedAt: "2026-08-25T10:00:00Z",
       url: "https://github.com/owner/project/commit/1234567",
       parentShas: [],
     });
+  });
+
+  it("does not add another commit fetch for Project-level card synthesis", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([commit()]), { status: 200 }),
+    );
+    const [project] = await observeProjectsGitHub(
+      [{
+        id: "project-id",
+        slug: "project",
+        name: "Project",
+        accent: "258",
+        githubRepositories: [{
+          id: "resource-id",
+          componentId: null,
+          componentName: null,
+          provider: "github",
+          resourceType: "repository",
+          label: "owner/project",
+          url: "https://github.com/owner/project",
+        }],
+      }],
+      { token: "token", fetchImpl, features: ["activity"] },
+    );
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(project.githubSummary.activity.latestCommit.subject).toBe(
+      "fix(ui): repair Project card",
+    );
   });
 
   it("requests a small default-branch commit window", async () => {

@@ -149,6 +149,8 @@ The existing repository Issue observation also derives the Project-card open-Iss
 
 The same bounded repository observation fetches the latest published, non-draft GitHub Release and orders candidates by `published_at`. Release summaries distinguish exact, partial, unavailable, and successful no-Release results. Per-repository evidence retains stable Resource and optional Component identity; multi-repository Products never promote one component tag, or coincidentally equal tags, into a Product-wide version. Published prereleases keep their channel marker. Git tags, manifests, `package.json`, version files, and legacy `components.current_version` metadata are not Release evidence and do not override GitHub Releases.
 
+Commit observations normalize the exact first-line GitHub subject, SHA, commit timestamp, URL, repository identity, and Resource-associated Component. Project-level Latest Commit is selected in memory by timestamp across the same bounded repository responses used by Activity and implementation analysis. Partial reads remain explicitly partial and do not claim a definitive Project-wide latest commit. General Latest Commit presentation does not alter Phase's separate changed-file implementation classifier.
+
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
 The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a multi-user credential model. A future public or commercial version would likely require a GitHub App or OAuth-based connection flow with user-scoped authorization.

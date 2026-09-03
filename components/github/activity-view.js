@@ -1,5 +1,5 @@
 import {
-  formatRelativeTime,
+  formatCompactRelativeTime,
   normalizeProjectAccent,
 } from "../../lib/projects/portfolio.js";
 
@@ -62,7 +62,7 @@ export function ActivityRows({ items, compact = false }) {
                 </p>
               </div>
               <span className="shrink-0 pt-0.5 font-mono text-[11px] text-muted">
-                {formatRelativeTime(item.committedAt) ?? "Time unknown"}
+                {formatCompactRelativeTime(item.committedAt) ?? "Time unknown"}
               </span>
             </div>
           </article>
@@ -86,7 +86,7 @@ export function ActivityView({ activity, check }) {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-[-0.025em]">Activity</h1>
         <p className="mt-2 text-sm leading-6 text-subtle">
-          Recent development activity observed on connected GitHub repositories.
+          Recent commits observed on connected GitHub repositories.
         </p>
         {check.checkedRepositoryCount > 0 ? (
           <p className="mt-3 font-mono text-[11px] text-muted">
@@ -116,7 +116,7 @@ export function ActivityView({ activity, check }) {
               ? "No connected GitHub repositories"
               : check.checkedRepositoryCount === 0
                 ? "Activity unavailable"
-                : "No recent development activity"}
+              : "No commit activity"}
           </p>
           <p className="mt-2 text-sm leading-6 text-subtle">
             {check.repositoryCount === 0

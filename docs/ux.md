@@ -50,6 +50,8 @@ The compact card Issue summary shows canonical-label bugs and total open work, f
 
 Card Release text links to the Workspace Releases tab and represents only published, non-draft GitHub Releases. Single repositories may show the exact tag and an explicit pre-release marker. One released repository in a multi-repository Product is scope-prefixed; multiple released Components use a compact count instead of a synthetic Product version. The Workspace lists every connected repository, including successful `No published GitHub Release` and per-repository unavailable states. Recorded Component application versions are labeled as metadata, not published Releases.
 
+Cards use `LATEST COMMIT · <relative time>` rather than an ambiguous `Recent:` line. The exact first-line commit subject is retained, including conventional prefixes; multi-repository cards prefix it with the associated Component or repository name. Partial reads say `partial`, complete failure says `Latest commit unavailable`, and Projects without GitHub source omit the section. Commit links remain independent siblings of the card overlay. Workspace Activity uses explicit commit terminology and retains repository, Component, SHA, timestamp, and GitHub navigation.
+
 ## Projects
 
 Projects provides the full portfolio with search, Project Phase filtering, an independent Needs Attention filter, and the primary “Add projects” entry point into GitHub import. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.
