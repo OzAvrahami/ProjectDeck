@@ -177,7 +177,11 @@ describe("Portfolio view model", () => {
         githubSummary: {
           repositoryCount: 2,
           issues: {
-            label: "3+ open issues",
+            label: "1+ bugs · 3+ open",
+            bugLabel: "1+ bugs",
+            openLabel: "3+ open",
+            openIssueCount: 3,
+            openBugCount: 1,
             status: "partial",
             checkedRepositoryCount: 1,
           },
@@ -187,8 +191,22 @@ describe("Portfolio view model", () => {
     );
 
     expect(card.issueSummary).toEqual({
-      label: "3+ open issues",
+      label: "1+ bugs · 3+ open",
+      openIssueCount: 3,
+      openBugCount: 1,
       status: "partial",
+      segments: [
+        {
+          key: "bugs",
+          label: "1+ bugs",
+          href: "/projects/limitpact?tab=issues&type=bug",
+        },
+        {
+          key: "open",
+          label: "3+ open",
+          href: "/projects/limitpact?tab=issues",
+        },
+      ],
       description: "1 of 2 repositories checked",
     });
     expect(card.releaseSummary).toEqual({ label: "Desktop v0.2.0" });

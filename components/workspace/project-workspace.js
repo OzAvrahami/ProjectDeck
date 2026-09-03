@@ -2,7 +2,11 @@ import Link from "next/link";
 
 import { ActivityRows } from "../github/activity-view.js";
 import { ProjectMark } from "../portfolio/project-card.js";
-import { WORKSPACE_TABS } from "../../lib/projects/navigation.js";
+import { filterProjectIssues } from "../../lib/projects/github-summary.js";
+import {
+  projectIssuesHref,
+  WORKSPACE_TABS,
+} from "../../lib/projects/navigation.js";
 import {
   buildProjectNextPresentation,
   formatRelativeTime,
@@ -45,15 +49,39 @@ function ProviderNote({ summary, subject }) {
   );
 }
 
-function WorkspaceIssues({ project }) {
+function WorkspaceIssues({ project, issueType }) {
   const summary = project.githubSummary.issues;
+  const issues = filterProjectIssues(summary.items, issueType);
+  const partial = summary.status === "partial";
+  const allCount = ["complete", "partial"].includes(summary.status)
+    ? `${summary.openIssueCount}${partial ? "+" : ""}`
+    : null;
+  const bugCount = ["complete", "partial"].includes(summary.status)
+    ? `${summary.openBugCount}${partial ? "+" : ""}`
+    : null;
 
   return (
-    <WorkspaceSection title="Issues" description="Open GitHub Issues connected to this Project.">
+    <WorkspaceSection title="Issues" description={issueType === "bug" ? "Open GitHub Issues with the canonical bug label." : "Open GitHub Issues connected to this Project."}>
+      <nav className="mb-4 flex flex-wrap gap-2" aria-label="Issue filters">
+        <Link
+          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${issueType === "all" ? "border-accent text-foreground" : "border-line text-subtle hover:border-accent"}`}
+          href={projectIssuesHref(project.slug)}
+          aria-current={issueType === "all" ? "page" : undefined}
+        >
+          All open Issues{allCount == null ? "" : ` · ${allCount}`}
+        </Link>
+        <Link
+          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${issueType === "bug" ? "border-accent text-foreground" : "border-line text-subtle hover:border-accent"}`}
+          href={projectIssuesHref(project.slug, { type: "bug" })}
+          aria-current={issueType === "bug" ? "page" : undefined}
+        >
+          Bugs{bugCount == null ? "" : ` · ${bugCount}`}
+        </Link>
+      </nav>
       <ProviderNote summary={summary} subject="Issues" />
-      {summary.items.length > 0 ? (
+      {issues.length > 0 ? (
         <div className="border-b border-line">
-          {summary.items.map((issue) => (
+          {issues.map((issue) => (
             <article className="border-t border-line py-4" key={issue.id}>
               <div className="flex items-start justify-between gap-5">
                 <div className="min-w-0">
@@ -74,7 +102,7 @@ function WorkspaceIssues({ project }) {
       ) : (
         <WorkspaceEmpty
           title={summary.status === "unavailable" ? "Issues unavailable" : "No open Issues"}
-          message={summary.status === "complete" ? "Every connected repository was checked successfully." : "No verified open Issues are available."}
+          message={summary.status === "complete" ? (issueType === "bug" ? "No open Issues have the canonical bug label." : "Every connected repository was checked successfully.") : "No verified open Issues are available."}
         />
       )}
     </WorkspaceSection>
@@ -484,12 +512,13 @@ export function ProjectWorkspace({
   project,
   card,
   activeTab,
+  issueType = "all",
   projectUpdated = false,
   railwayIntegration = null,
 }) {
   const content = {
     overview: <WorkspaceOverview project={project} card={card} railwayIntegration={railwayIntegration} />,
-    issues: <WorkspaceIssues project={project} />,
+    issues: <WorkspaceIssues project={project} issueType={issueType} />,
     releases: <WorkspaceReleases project={project} />,
     activity: <WorkspaceActivity project={project} />,
     docs: <WorkspaceDocs project={project} />,

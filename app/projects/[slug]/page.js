@@ -18,6 +18,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
     ? requestedTab
     : "overview";
   const projectUpdated = query?.updated === "1";
+  const issueType = query?.type === "bug" ? "bug" : "all";
   let project;
 
   try {
@@ -53,6 +54,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
         project={observedProject}
         card={card}
         activeTab={activeTab}
+        issueType={issueType}
         projectUpdated={projectUpdated}
         railwayIntegration={railwayIntegration}
       />

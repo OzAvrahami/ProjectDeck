@@ -30,6 +30,7 @@ export function ProjectCard({ card }) {
       ? {
           key: "issues",
           label: card.issueSummary.label,
+          segments: card.issueSummary.segments,
           title: card.issueSummary.description,
         }
       : null,
@@ -159,7 +160,27 @@ export function ProjectCard({ card }) {
                   ·
                 </span>
               ) : null}
-              <span title={item.title ?? undefined}>{item.label}</span>
+              {item.key === "issues" ? (
+                <span title={item.title ?? undefined}>
+                  {item.segments.map((segment, segmentIndex) => (
+                    <Fragment key={segment.key}>
+                      {segmentIndex > 0 ? (
+                        <span className="mx-2 opacity-45" aria-hidden="true">
+                          ·
+                        </span>
+                      ) : null}
+                      <Link
+                        className="project-card-secondary-link hover:text-[var(--project-color)] hover:underline"
+                        href={segment.href}
+                      >
+                        {segment.label}
+                      </Link>
+                    </Fragment>
+                  ))}
+                </span>
+              ) : (
+                <span title={item.title ?? undefined}>{item.label}</span>
+              )}
             </Fragment>
           ))}
         </p>

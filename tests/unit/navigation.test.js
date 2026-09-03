@@ -5,6 +5,7 @@ import {
   PORTFOLIO_NAVIGATION,
   PROJECT_SECTIONS,
   projectEditHref,
+  projectIssuesHref,
 } from "../../lib/projects/navigation";
 
 describe("portfolio navigation", () => {
@@ -32,5 +33,11 @@ describe("portfolio navigation", () => {
   it("uses the existing GitHub import and Project edit destinations", () => {
     expect(ADD_PROJECTS_HREF).toBe("/setup/github");
     expect(projectEditHref("limitpact")).toBe("/projects/limitpact/edit");
+    expect(projectIssuesHref("limit pact")).toBe(
+      "/projects/limit%20pact?tab=issues",
+    );
+    expect(projectIssuesHref("limit pact", { type: "bug" })).toBe(
+      "/projects/limit%20pact?tab=issues&type=bug",
+    );
   });
 });

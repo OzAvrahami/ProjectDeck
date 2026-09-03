@@ -107,6 +107,7 @@ function release(overrides = {}) {
 describe("GitHub Issues", () => {
   it("normalizes only the Issue fields ProjectDeck needs", () => {
     expect(normalizeGitHubIssue(issue(), repository)).toEqual({
+      type: "issue",
       id: "10",
       number: 4,
       title: "Fix the import",

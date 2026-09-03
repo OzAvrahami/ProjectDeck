@@ -145,6 +145,8 @@ The phase service returns the Phase, its source (`override`, `inferred`, or `unk
 
 The same batched GitHub Projects catalog and normalized Project read model also power automatic Next; the portfolio does not perform a separate catalog request per card. A non-empty existing `next_action` value is the manual override, while null means Automatic. Eligible open Issues rank by Status (`In Progress`, `Verify`, `Ready`) and then Standard v1 Priority (`P0`, `P1`, `P2`, `P3`, unset). GitHub does not expose a reliable “entered Status at” timestamp, so exact ties use Issue updated time descending, stable repository identity ascending, then Issue number ascending. The result preserves Issue URL, repository identity, and Component context when available.
 
+The existing repository Issue observation also derives the Project-card open-Issue and canonical `bug` counts. It deduplicates overlapping Issue identities across connected repositories, aggregates multi-repository Products once, and marks partial reads as lower bounds. A complete provider failure remains unavailable rather than becoming a false zero. This count does not change Automatic Next or Needs Attention rules.
+
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
 The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a multi-user credential model. A future public or commercial version would likely require a GitHub App or OAuth-based connection flow with user-scoped authorization.
