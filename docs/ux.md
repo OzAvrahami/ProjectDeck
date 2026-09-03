@@ -48,6 +48,8 @@ Selecting a card opens its Project Workspace. Links or controls inside a card mu
 
 The compact card Issue summary shows canonical-label bugs and total open work, for example `3 bugs · 10 open`. Exact zero-bug results show only the open total, partial repository reads use `+` lower-bound markers, and total failure says `Issues unavailable`. The totals link to the Workspace Issues tab, with bug counts opening its canonical `bug` filter. Bug count remains separate from Needs Attention.
 
+Card Release text links to the Workspace Releases tab and represents only published, non-draft GitHub Releases. Single repositories may show the exact tag and an explicit pre-release marker. One released repository in a multi-repository Product is scope-prefixed; multiple released Components use a compact count instead of a synthetic Product version. The Workspace lists every connected repository, including successful `No published GitHub Release` and per-repository unavailable states. Recorded Component application versions are labeled as metadata, not published Releases.
+
 ## Projects
 
 Projects provides the full portfolio with search, Project Phase filtering, an independent Needs Attention filter, and the primary “Add projects” entry point into GitHub import. Results retain recognizable project identity and a clear route into each workspace. Empty search results should explain that no projects match and make it easy to clear the query or filters.

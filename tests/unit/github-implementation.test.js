@@ -4,12 +4,40 @@ import {
   classifyImplementationChanges,
   classifyRepositoryTree,
   isMeaningfulImplementationPath,
+  observeRepositoryImplementation,
   recentCommitsWithinWindow,
 } from "../../lib/github/implementation.js";
 
 vi.mock("server-only", () => ({}));
 
 describe("GitHub implementation evidence", () => {
+  it("keeps a published GitHub Release as released Phase maturity evidence", async () => {
+    const result = await observeRepositoryImplementation(
+      { owner: "example", name: "project", fullName: "example/project" },
+      {
+        release: {
+          status: "success",
+          item: {
+            tagName: "v1.0.0",
+            publishedAt: "2026-09-03T10:00:00Z",
+          },
+        },
+        activity: {
+          status: "unavailable",
+          error: { code: "provider", message: "Unavailable" },
+        },
+      },
+    );
+
+    expect(result.maturity).toMatchObject({
+      state: "released",
+      evidence: {
+        tagName: "v1.0.0",
+        publishedAt: "2026-09-03T10:00:00Z",
+      },
+    });
+  });
+
   it.each([
     "README.md",
     "docs/product.md",

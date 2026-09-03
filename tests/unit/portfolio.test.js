@@ -185,7 +185,10 @@ describe("Portfolio view model", () => {
             status: "partial",
             checkedRepositoryCount: 1,
           },
-          releases: { compactLabel: "Desktop v0.2.0" },
+          releases: {
+            safeCardLabel: "Desktop · v0.2.0",
+            state: "exact",
+          },
         },
       }),
     );
@@ -209,7 +212,12 @@ describe("Portfolio view model", () => {
       ],
       description: "1 of 2 repositories checked",
     });
-    expect(card.releaseSummary).toEqual({ label: "Desktop v0.2.0" });
+    expect(card.releaseSummary).toEqual({
+      label: "Desktop · v0.2.0",
+      href: "/projects/limitpact?tab=releases",
+      state: "exact",
+      description: "Published GitHub Release evidence",
+    });
   });
 
   it("filters phase and Needs Attention independently", () => {

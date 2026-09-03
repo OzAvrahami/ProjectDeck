@@ -32,8 +32,23 @@ function issue(id, overrides = {}) {
   };
 }
 
-function release(tagName, publishedAt = "2026-08-24T10:00:00Z") {
-  return { id: tagName, tagName, publishedAt };
+function release(
+  tagName,
+  publishedAt = "2026-08-24T10:00:00Z",
+  overrides = {},
+) {
+  return {
+    id: tagName,
+    tag: tagName,
+    tagName,
+    name: null,
+    repository: { fullName: "example/desktop" },
+    url: `https://github.com/example/desktop/releases/tag/${tagName}`,
+    publishedAt,
+    prerelease: false,
+    draft: false,
+    ...overrides,
+  };
 }
 
 function observation(overrides = {}) {
@@ -42,6 +57,7 @@ function observation(overrides = {}) {
     resourceId: "resource-id",
     componentId: "component-id",
     componentName: "Desktop",
+    repository: { fullName: "example/desktop" },
     scopeLabel: "Desktop",
     checkedAt: "2026-08-26T10:00:00Z",
     issues: { status: "success", items: [] },
@@ -241,7 +257,14 @@ describe("Project GitHub aggregation", () => {
       observation({ release: { status: "success", item: release("v0.2.0") } }),
     ]);
 
-    expect(summary.releases.compactLabel).toBe("v0.2.0");
+    expect(summary.releases).toMatchObject({
+      state: "exact",
+      releaseBearingRepositoryCount: 1,
+      safeCardLabel: "v0.2.0",
+      hasSingleSafeProjectRelease: true,
+      checkedRepositoryCount: 1,
+      failedRepositoryCount: 0,
+    });
   });
 
   it("keeps a lone multi-repository Release explicitly scoped", () => {
@@ -249,12 +272,14 @@ describe("Project GitHub aggregation", () => {
       observation({ release: { status: "success", item: release("v0.2.0") } }),
       observation({
         resourceId: "website",
+        repository: { fullName: "example/website" },
         componentName: "Website",
         scopeLabel: "Website",
       }),
     ]);
 
-    expect(summary.releases.compactLabel).toBe("Desktop v0.2.0");
+    expect(summary.releases.safeCardLabel).toBe("Desktop · v0.2.0");
+    expect(summary.releases.hasSingleSafeProjectRelease).toBe(false);
   });
 
   it("does not manufacture a Project version from different repository Releases", () => {
@@ -262,6 +287,7 @@ describe("Project GitHub aggregation", () => {
       observation({ release: { status: "success", item: release("v0.2.0") } }),
       observation({
         resourceId: "website",
+        repository: { fullName: "example/website" },
         componentName: "Website",
         scopeLabel: "Website",
         release: { status: "success", item: release("v1.4.0") },
@@ -272,7 +298,162 @@ describe("Project GitHub aggregation", () => {
       "v0.2.0",
       "v1.4.0",
     ]);
-    expect(summary.releases.compactLabel).toBeNull();
+    expect(summary.releases.safeCardLabel).toBe("2 component releases");
+    expect(summary.releases.hasSingleSafeProjectRelease).toBe(false);
+  });
+
+  it("never treats equal component tags as a Product-wide version", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({ release: { status: "success", item: release("v1.0.0") } }),
+      observation({
+        resourceId: "website",
+        repository: { fullName: "example/website" },
+        componentId: "website-component",
+        componentName: "Website",
+        release: {
+          status: "success",
+          item: release("v1.0.0", "2026-08-25T10:00:00Z", {
+            repository: { fullName: "example/website" },
+          }),
+        },
+      }),
+    ]);
+
+    expect(summary.releases.safeCardLabel).toBe("2 component releases");
+    expect(summary.releases.hasSingleSafeProjectRelease).toBe(false);
+  });
+
+  it("marks a published prerelease without hiding it behind an older stable Release", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        release: {
+          status: "success",
+          item: release("v1.2.0-beta.2", "2026-08-26T10:00:00Z", {
+            prerelease: true,
+          }),
+        },
+      }),
+    ]);
+
+    expect(summary.releases.safeCardLabel).toBe(
+      "v1.2.0-beta.2 · pre-release",
+    );
+    expect(summary.releases.items[0].prerelease).toBe(true);
+  });
+
+  it.each([
+    ["Git tag", { tags: ["v0.2.0"] }],
+    ["package.json", { packageVersion: "0.1.0" }],
+    ["VERSION file", { versionFile: "0.2.0" }],
+  ])("does not treat %s metadata as a published Release", (_source, metadata) => {
+    const summary = summarizeProjectGitHub(
+      project({
+        components: [{ id: "component-id", currentVersion: "9.9.9" }],
+        ...metadata,
+      }),
+      [observation({ ...metadata, release: { status: "success", item: null } })],
+    );
+
+    expect(summary.releases).toMatchObject({
+      state: "exact",
+      releaseBearingRepositoryCount: 0,
+      safeCardLabel: "No release",
+      hasSingleSafeProjectRelease: false,
+    });
+  });
+
+  it("keeps exact no-release distinct from provider unavailability", () => {
+    const noRelease = summarizeProjectGitHub(project(), [observation()]);
+    const unavailable = summarizeProjectGitHub(project(), [observation({
+      release: {
+        status: "unavailable",
+        error: { code: "provider", message: "Unavailable" },
+      },
+    })]);
+
+    expect(noRelease.releases).toMatchObject({
+      state: "exact",
+      safeCardLabel: "No release",
+    });
+    expect(unavailable.releases).toMatchObject({
+      state: "unavailable",
+      safeCardLabel: "Release unavailable",
+    });
+  });
+
+  it("keeps known component evidence while marking a partial release set", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({ release: { status: "success", item: release("v0.3.0") } }),
+      observation({
+        resourceId: "website",
+        repository: { fullName: "example/website" },
+        componentId: "website-component",
+        componentName: "Website",
+        release: {
+          status: "unavailable",
+          error: { code: "permission", message: "Unavailable" },
+        },
+      }),
+    ]);
+
+    expect(summary.releases).toMatchObject({
+      state: "partial",
+      safeCardLabel: "Release information incomplete",
+      releaseBearingRepositoryCount: 1,
+      checkedRepositoryCount: 1,
+      failedRepositoryCount: 1,
+    });
+    expect(summary.releases.repositories[0]).toMatchObject({
+      component: { name: "Desktop" },
+      repository: { fullName: "example/desktop" },
+      latestRelease: { tagName: "v0.3.0" },
+    });
+    expect(summary.releases.repositories[1]).toMatchObject({
+      component: { name: "Website" },
+      repository: { fullName: "example/website" },
+      providerStatus: "unavailable",
+    });
+  });
+
+  it("uses repository identity when no Component is associated", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        componentId: null,
+        componentName: null,
+        scopeLabel: "desktop",
+        release: { status: "success", item: release("v0.3.0") },
+      }),
+      observation({
+        resourceId: "website",
+        repository: { fullName: "example/website" },
+        componentId: null,
+        componentName: null,
+        scopeLabel: "website",
+      }),
+    ]);
+
+    expect(summary.releases.safeCardLabel).toBe(
+      "example/desktop · v0.3.0",
+    );
+    expect(summary.releases.repositories[0].component).toBeNull();
+  });
+
+  it("does not fabricate a multi-repository version when no Releases exist", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation(),
+      observation({
+        resourceId: "website",
+        repository: { fullName: "example/website" },
+        componentId: "website-component",
+        componentName: "Website",
+      }),
+    ]);
+
+    expect(summary.releases).toMatchObject({
+      state: "exact",
+      safeCardLabel: "No releases",
+      releaseBearingRepositoryCount: 0,
+    });
   });
 
   it("orders multi-repository Activity and keeps partial coverage explicit", () => {

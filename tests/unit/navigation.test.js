@@ -6,6 +6,7 @@ import {
   PROJECT_SECTIONS,
   projectEditHref,
   projectIssuesHref,
+  projectReleasesHref,
 } from "../../lib/projects/navigation";
 
 describe("portfolio navigation", () => {
@@ -38,6 +39,9 @@ describe("portfolio navigation", () => {
     );
     expect(projectIssuesHref("limit pact", { type: "bug" })).toBe(
       "/projects/limit%20pact?tab=issues&type=bug",
+    );
+    expect(projectReleasesHref("limit pact")).toBe(
+      "/projects/limit%20pact?tab=releases",
     );
   });
 });

@@ -109,36 +109,74 @@ function WorkspaceIssues({ project, issueType }) {
   );
 }
 
+function formatPublishedDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function WorkspaceReleases({ project }) {
   const summary = project.githubSummary.releases;
 
   return (
-    <WorkspaceSection title="Releases" description="Published GitHub Releases with repository scope preserved.">
-      <ProviderNote summary={summary} subject="Releases" />
-      {summary.items.length > 0 ? (
+    <WorkspaceSection title="Releases" description="Latest published GitHub Release for each connected repository, with Component scope preserved.">
+      <ProviderNote summary={summary} subject="Release information" />
+      {summary.repositories.length > 0 ? (
         <div className="border-b border-line">
-          {summary.items.map((release) => (
-            <article className="border-t border-line py-4" key={release.id}>
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="font-mono text-[11px] text-muted">
-                    {release.component?.name ? `${release.component.name} · ` : ""}{release.repository.fullName}
+          {summary.repositories.map((repository) => (
+            <article className="border-t border-line py-5" key={repository.resourceId}>
+              <p className="font-semibold">
+                {repository.component?.name ?? repository.repository?.fullName ?? "Repository"}
+              </p>
+              {repository.component?.name && repository.repository?.fullName ? (
+                <p className="mt-1 font-mono text-[11px] text-muted">
+                  {repository.repository.fullName}
+                </p>
+              ) : null}
+              {repository.providerStatus === "unavailable" ? (
+                <div className="mt-3">
+                  <p className="text-sm font-semibold text-subtle">Release data unavailable</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {GITHUB_FAILURE_LABELS[repository.error?.code] ?? "GitHub temporarily unavailable"}
                   </p>
-                  <div className="mt-2 flex flex-wrap items-baseline gap-3">
-                    <a className="font-mono text-sm font-semibold hover:text-accent hover:underline" href={release.url} target="_blank" rel="noreferrer">{release.tagName}</a>
-                    {release.name && release.name !== release.tagName ? <span className="text-sm text-subtle">{release.name}</span> : null}
-                    {release.prerelease ? <span className="font-mono text-[11px] text-muted">Prerelease</span> : null}
-                  </div>
                 </div>
-                <span className="shrink-0 font-mono text-[11px] text-muted">{formatRelativeTime(release.publishedAt) ?? "Date unknown"}</span>
-              </div>
+              ) : repository.latestRelease ? (
+                <div className="mt-3">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <a className="font-mono text-sm font-semibold hover:text-accent hover:underline" href={repository.latestRelease.url} target="_blank" rel="noreferrer">
+                      {repository.latestRelease.tagName}
+                    </a>
+                    {repository.latestRelease.prerelease ? (
+                      <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Pre-release</span>
+                    ) : null}
+                    {repository.latestRelease.name && repository.latestRelease.name !== repository.latestRelease.tagName ? (
+                      <span className="text-sm text-subtle">{repository.latestRelease.name}</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 font-mono text-[11px] text-muted">
+                    {formatPublishedDate(repository.latestRelease.publishedAt)
+                      ? `Published ${formatPublishedDate(repository.latestRelease.publishedAt)}`
+                      : "Published date unavailable"}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-subtle">No published GitHub Release</p>
+              )}
             </article>
           ))}
         </div>
       ) : (
         <WorkspaceEmpty
-          title={summary.status === "unavailable" ? "Releases unavailable" : "No published Releases"}
-          message={summary.status === "complete" ? "Connected repositories were checked; ordinary Git tags are not included." : "No verified published Release is available."}
+          title="No connected GitHub repositories"
+          message="Published Releases appear only for connected GitHub repository Resources."
         />
       )}
     </WorkspaceSection>
@@ -466,7 +504,7 @@ function WorkspaceOverview({ project, card, railwayIntegration }) {
           <h3 className="workspace-rail-title">Components</h3>
           {project.components.length > 0 ? (
             <ul className="space-y-2 text-sm">
-              {project.components.map((component) => <li key={component.id}>{component.name}{component.currentVersion ? <span className="ml-2 font-mono text-[11px] text-muted">{component.currentVersion}</span> : null}</li>)}
+              {project.components.map((component) => <li key={component.id}>{component.name}{component.currentVersion ? <span className="ml-2 font-mono text-[11px] text-muted" title="Legacy/manual application metadata; not a published GitHub Release">Recorded app version · {component.currentVersion}</span> : null}</li>)}
             </ul>
           ) : <p className="text-xs text-muted">No Components</p>}
         </aside>

@@ -147,6 +147,8 @@ The same batched GitHub Projects catalog and normalized Project read model also 
 
 The existing repository Issue observation also derives the Project-card open-Issue and canonical `bug` counts. It deduplicates overlapping Issue identities across connected repositories, aggregates multi-repository Products once, and marks partial reads as lower bounds. A complete provider failure remains unavailable rather than becoming a false zero. This count does not change Automatic Next or Needs Attention rules.
 
+The same bounded repository observation fetches the latest published, non-draft GitHub Release and orders candidates by `published_at`. Release summaries distinguish exact, partial, unavailable, and successful no-Release results. Per-repository evidence retains stable Resource and optional Component identity; multi-repository Products never promote one component tag, or coincidentally equal tags, into a Product-wide version. Published prereleases keep their channel marker. Git tags, manifests, `package.json`, version files, and legacy `components.current_version` metadata are not Release evidence and do not override GitHub Releases.
+
 The token must never be exposed to browser code, client-rendered configuration, logs, or error details. GitHub calls originate from server-side integration modules, and responses are reduced to the information ProjectDeck needs.
 
 The MVP does not include GitHub OAuth, a GitHub App, per-user connections, or a multi-user credential model. A future public or commercial version would likely require a GitHub App or OAuth-based connection flow with user-scoped authorization.

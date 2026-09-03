@@ -24,7 +24,12 @@ export function ProjectCard({ card }) {
         : null;
   const metadata = [
     card.releaseSummary
-      ? { key: "release", label: card.releaseSummary.label }
+      ? {
+          key: "release",
+          label: card.releaseSummary.label,
+          href: card.releaseSummary.href,
+          title: card.releaseSummary.description,
+        }
       : null,
     card.issueSummary
       ? {
@@ -178,6 +183,14 @@ export function ProjectCard({ card }) {
                     </Fragment>
                   ))}
                 </span>
+              ) : item.href ? (
+                <Link
+                  className="project-card-secondary-link hover:text-[var(--project-color)] hover:underline"
+                  href={item.href}
+                  title={item.title ?? undefined}
+                >
+                  {item.label}
+                </Link>
               ) : (
                 <span title={item.title ?? undefined}>{item.label}</span>
               )}

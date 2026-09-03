@@ -44,4 +44,14 @@ describe("Project card Issue navigation", () => {
     expect(workspaceSource).toContain("All open Issues");
     expect(workspaceSource).toContain("type: \"bug\"");
   });
+
+  it("renders the authoritative Release summary as a secondary link", () => {
+    expect(cardSource).toContain("card.releaseSummary.href");
+    expect(cardSource).toContain("item.href");
+    expect(cardSource).toContain("project-card-secondary-link");
+    expect(workspaceSource).toContain("No published GitHub Release");
+    expect(workspaceSource).toContain("Release data unavailable");
+    expect(workspaceSource).toContain("Recorded app version");
+    expect(workspaceSource).toContain("not a published GitHub Release");
+  });
 });

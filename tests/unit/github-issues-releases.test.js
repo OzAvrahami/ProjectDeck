@@ -236,7 +236,7 @@ describe("GitHub Releases", () => {
             id: 21,
             tag_name: "v1.3.0-draft",
             draft: true,
-            published_at: null,
+            published_at: "2026-08-25T10:00:00Z",
           }),
           release(),
         ]),
@@ -250,6 +250,53 @@ describe("GitHub Releases", () => {
         fetchImpl,
       }),
     ).resolves.toEqual(normalizeGitHubRelease(release(), repository));
+
+    expect(normalizeGitHubRelease(release(), repository)).toMatchObject({
+      id: "20",
+      tag: "v1.2.0",
+      tagName: "v1.2.0",
+      repository,
+      prerelease: false,
+      draft: false,
+    });
+  });
+
+  it("chooses the newest published Release by published_at and keeps prerelease state", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          release({
+            id: 21,
+            tag_name: "v9.0.0",
+            published_at: "2026-08-20T10:00:00Z",
+          }),
+          release({
+            id: 22,
+            tag_name: "historical-beta-2",
+            published_at: "2026-08-26T10:00:00Z",
+            prerelease: true,
+          }),
+        ]),
+        { status: 200 },
+      ),
+    );
+
+    await expect(
+      fetchLatestPublishedGitHubRelease(repository, {
+        token: "token",
+        fetchImpl,
+      }),
+    ).resolves.toMatchObject({
+      tagName: "historical-beta-2",
+      prerelease: true,
+      publishedAt: "2026-08-26T10:00:00Z",
+    });
+  });
+
+  it("rejects malformed published chronology instead of fabricating an order", () => {
+    expect(() => normalizeGitHubRelease(release({
+      published_at: "not-a-date",
+    }), repository)).toThrow("invalid Release record");
   });
 
   it("treats no published Release as a successful null result", async () => {
