@@ -1,15 +1,75 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { AppShell } from "../../../components/app-shell.js";
-import { ProjectWorkspace } from "../../../components/workspace/project-workspace.js";
-import { observeProjectsWithAutomation } from "../../../lib/projects/phase-observations.js";
+import { GitHubDevelopmentStandardPanel } from "../../../components/github/development-standard-panel.js";
+import {
+  ProjectWorkspaceContent,
+  ProjectWorkspaceHeaderSignals,
+  ProjectWorkspaceShell,
+  WorkspaceProviderLoading,
+} from "../../../components/workspace/project-workspace.js";
 import { buildProjectCardViewModel } from "../../../lib/projects/portfolio.js";
 import { getProjectWorkspaceBySlug } from "../../../lib/projects/queries.js";
 import { WORKSPACE_TABS } from "../../../lib/projects/navigation.js";
+import {
+  observeProjectWorkspaceSurface,
+  workspaceObservationRequirements,
+} from "../../../lib/projects/workspace-observations.js";
 import { getRailwayIntegrationView } from "../../../lib/railway/connection.js";
 import { observeGitHubDevelopmentStandard } from "../../../lib/github/standard/observe.js";
 
 export const dynamic = "force-dynamic";
+
+async function ObservedHeaderSignals({ observedProjectPromise }) {
+  const observedProject = await observedProjectPromise;
+  return (
+    <ProjectWorkspaceHeaderSignals
+      card={buildProjectCardViewModel(observedProject)}
+    />
+  );
+}
+
+async function GitHubStandardContent({ project }) {
+  const audit = await observeGitHubDevelopmentStandard(project).catch(() => null);
+  return (
+    <GitHubDevelopmentStandardPanel
+      initialAudit={audit}
+      slug={project.slug}
+    />
+  );
+}
+
+async function ObservedWorkspaceContent({
+  activeTab,
+  issueType,
+  observedProjectPromise,
+  railwayIntegrationPromise,
+}) {
+  const [project, railwayIntegration] = await Promise.all([
+    observedProjectPromise,
+    railwayIntegrationPromise,
+  ]);
+  const card = buildProjectCardViewModel(project);
+  const githubStandardContent = activeTab === "overview" ? (
+    <Suspense
+      fallback={<WorkspaceProviderLoading subject="GitHub Standard audit" />}
+    >
+      <GitHubStandardContent project={project} />
+    </Suspense>
+  ) : null;
+
+  return (
+    <ProjectWorkspaceContent
+      project={project}
+      card={card}
+      activeTab={activeTab}
+      issueType={issueType}
+      railwayIntegration={railwayIntegration}
+      githubStandardContent={githubStandardContent}
+    />
+  );
+}
 
 export default async function ProjectIdentityPage({ params, searchParams }) {
   const { slug } = await params;
@@ -42,27 +102,45 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
     notFound();
   }
 
-  const [observedProjects, railwayIntegration] = await Promise.all([
-    observeProjectsWithAutomation([project]),
-    getRailwayIntegrationView().catch(() => null),
-  ]);
-  const [observedProject] = observedProjects;
-  const card = buildProjectCardViewModel(observedProject);
-  const githubStandardAudit = activeTab === "overview"
-    ? await observeGitHubDevelopmentStandard(observedProject).catch(() => null)
-    : null;
+  const requirements = workspaceObservationRequirements(activeTab);
+  const observedProjectPromise = observeProjectWorkspaceSurface(
+    project,
+    activeTab,
+  );
+  const railwayIntegrationPromise = requirements.railwayIntegration
+    ? getRailwayIntegrationView().catch(() => null)
+    : Promise.resolve(null);
+  const card = buildProjectCardViewModel(project);
 
   return (
     <AppShell workspaceName={card.name}>
-      <ProjectWorkspace
-        project={observedProject}
+      <ProjectWorkspaceShell
         card={card}
         activeTab={activeTab}
-        issueType={issueType}
         projectUpdated={projectUpdated}
-        railwayIntegration={railwayIntegration}
-        githubStandardAudit={githubStandardAudit}
-      />
+        headerSignals={requirements.mode === "automation" ? (
+          <Suspense fallback={null}>
+            <ObservedHeaderSignals
+              observedProjectPromise={observedProjectPromise}
+            />
+          </Suspense>
+        ) : null}
+      >
+        <Suspense
+          fallback={(
+            <div className="mt-9">
+              <WorkspaceProviderLoading subject={`${activeTab} evidence`} />
+            </div>
+          )}
+        >
+          <ObservedWorkspaceContent
+            activeTab={activeTab}
+            issueType={issueType}
+            observedProjectPromise={observedProjectPromise}
+            railwayIntegrationPromise={railwayIntegrationPromise}
+          />
+        </Suspense>
+      </ProjectWorkspaceShell>
     </AppShell>
   );
 }

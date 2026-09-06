@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { ActivityRows } from "../github/activity-view.js";
 import { GitHubDevelopmentStandardPanel } from "../github/development-standard-panel.js";
@@ -251,6 +252,18 @@ function providerLabel(provider) {
   }[provider] ?? provider;
 }
 
+export function WorkspaceProviderLoading({ subject = "Project evidence" }) {
+  return (
+    <section aria-busy="true" aria-live="polite">
+      <div className="h-5 w-36 animate-pulse rounded bg-line-soft" />
+      <div className="mt-3 h-3 w-full max-w-md animate-pulse rounded bg-line-soft" />
+      <p className="mt-4 font-mono text-[10px] uppercase tracking-wide text-muted">
+        Loading {subject}
+      </p>
+    </section>
+  );
+}
+
 function attentionValueLabel(value) {
   return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "Unknown";
 }
@@ -407,6 +420,7 @@ function WorkspaceOverview({
   card,
   railwayIntegration,
   githubStandardAudit,
+  githubStandardContent = null,
 }) {
   const quickLinks = buildQuickLinks(project.resources);
   const recentActivity = project.githubSummary.activity;
@@ -508,10 +522,12 @@ function WorkspaceOverview({
           title="GitHub Development Standard"
           description="Read-only audit, explicit migration plan, and separately authorized safe changes."
         >
-          <GitHubDevelopmentStandardPanel
-            initialAudit={githubStandardAudit}
-            slug={project.slug}
-          />
+          {githubStandardContent ?? (
+            <GitHubDevelopmentStandardPanel
+              initialAudit={githubStandardAudit}
+              slug={project.slug}
+            />
+          )}
         </WorkspaceSection>
       </div>
 
@@ -562,14 +578,23 @@ function WorkspaceOverview({
   );
 }
 
-export function ProjectWorkspace({
+export function ProjectWorkspaceHeaderSignals({ card }) {
+  return (
+    <>
+      <span className="flex items-center gap-1.5 text-xs text-subtle" title={card.phaseSource === "override" ? "Manual override" : card.phaseReason}><span className={`phase-dot phase-${card.phase}`} aria-hidden="true" />{card.phaseLabel}{card.phaseSource === "override" ? <span className="font-mono text-[9px] uppercase tracking-wide text-muted">Manual</span> : null}</span>
+      {card.needsAttention ? <span className="attention-pill">Needs Attention</span> : null}
+    </>
+  );
+}
+
+export function ProjectWorkspaceContent({
   project,
   card,
   activeTab,
   issueType = "all",
-  projectUpdated = false,
   railwayIntegration = null,
   githubStandardAudit = null,
+  githubStandardContent = null,
 }) {
   const content = {
     overview: (
@@ -578,6 +603,7 @@ export function ProjectWorkspace({
         card={card}
         railwayIntegration={railwayIntegration}
         githubStandardAudit={githubStandardAudit}
+        githubStandardContent={githubStandardContent}
       />
     ),
     issues: <WorkspaceIssues project={project} issueType={issueType} />,
@@ -586,6 +612,16 @@ export function ProjectWorkspace({
     docs: <WorkspaceDocs project={project} />,
   }[activeTab];
 
+  return <div className="mt-9">{content}</div>;
+}
+
+export function ProjectWorkspaceShell({
+  card,
+  activeTab,
+  projectUpdated = false,
+  headerSignals = null,
+  children,
+}) {
   return (
     <section className="workspace-root mx-auto max-w-[1060px] px-5 py-9 sm:px-8 sm:py-11" style={{ "--project-hue": card.accentHue }}>
       <div className="flex flex-wrap items-center justify-between gap-5">
@@ -594,8 +630,7 @@ export function ProjectWorkspace({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-semibold tracking-[-0.025em]">{card.name}</h1>
-              <span className="flex items-center gap-1.5 text-xs text-subtle" title={card.phaseSource === "override" ? "Manual override" : card.phaseReason}><span className={`phase-dot phase-${card.phase}`} aria-hidden="true" />{card.phaseLabel}{card.phaseSource === "override" ? <span className="font-mono text-[9px] uppercase tracking-wide text-muted">Manual</span> : null}</span>
-              {card.needsAttention ? <span className="attention-pill">Needs Attention</span> : null}
+              {headerSignals}
             </div>
             {card.tagline ? <p className="mt-1.5 text-sm text-subtle">{card.tagline}</p> : null}
           </div>
@@ -627,7 +662,37 @@ export function ProjectWorkspace({
         </ul>
       </nav>
 
-      <div className="mt-9">{content}</div>
+      {children}
     </section>
+  );
+}
+
+export function ProjectWorkspace({
+  project,
+  card,
+  activeTab,
+  issueType = "all",
+  projectUpdated = false,
+  railwayIntegration = null,
+  githubStandardAudit = null,
+}) {
+  return (
+    <ProjectWorkspaceShell
+      card={card}
+      activeTab={activeTab}
+      projectUpdated={projectUpdated}
+      headerSignals={<ProjectWorkspaceHeaderSignals card={card} />}
+    >
+      <Suspense fallback={<WorkspaceProviderLoading />}>
+        <ProjectWorkspaceContent
+          project={project}
+          card={card}
+          activeTab={activeTab}
+          issueType={issueType}
+          railwayIntegration={railwayIntegration}
+          githubStandardAudit={githubStandardAudit}
+        />
+      </Suspense>
+    </ProjectWorkspaceShell>
   );
 }

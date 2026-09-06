@@ -96,6 +96,8 @@ External providers remain authoritative for information ProjectDeck observes, in
 
 ProjectDeck may store normalized snapshots or last-known external data to support fast loading and local failure handling. Stored observations must remain distinguishable from user-owned state and must retain enough provider and freshness context to avoid presenting stale data as current.
 
+Request-time navigation uses explicit surface requirements. A Project Workspace query selects one Project and its owned rows by exact slug rather than composing the full portfolio. Overview performs the complete automation observation; Issues requests Issue evidence, Releases requests published-Release evidence, Activity requests commit evidence, and Docs remains local. The saved Project shell streams before those observations, and the GitHub Development Standard audit is a secondary Overview stream that reuses the current workflow/Release evidence. ProjectDeck does not add a cross-request provider cache here: every completed provider result retains its own checked/partial/unavailable semantics, and GitHub Standard Apply always performs an uncached authoritative re-read.
+
 ProjectDeck's Neon database is its own application database. It is independent of any Neon, Supabase, PostgreSQL, or other database used by a monitored project. ProjectDeck never connects merely because a database resource exists: a PostgreSQL monitor must be explicit and performs only `SELECT 1`.
 
 This document deliberately does not define detailed tables or columns.

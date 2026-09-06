@@ -1,8 +1,11 @@
+import { Suspense } from "react";
+
 import { AppShell } from "../../components/app-shell.js";
 import {
   IssuesView,
   ObservationDatabaseError,
 } from "../../components/github/github-observation-views.js";
+import { SurfaceLoading } from "../../components/surface-loading.js";
 import { observeProjectsGitHub } from "../../lib/projects/github-observations.js";
 import {
   listCrossProjectIssues,
@@ -12,16 +15,14 @@ import { listPortfolioProjects } from "../../lib/projects/queries.js";
 
 export const dynamic = "force-dynamic";
 
-export default async function IssuesPage() {
+async function ObservedIssues() {
   let projects;
 
   try {
     projects = await listPortfolioProjects();
   } catch {
     return (
-      <AppShell activeSection="Issues">
-        <ObservationDatabaseError subject="Issues" />
-      </AppShell>
+      <ObservationDatabaseError subject="Issues" />
     );
   }
 
@@ -30,11 +31,26 @@ export default async function IssuesPage() {
   });
 
   return (
+    <IssuesView
+      issues={listCrossProjectIssues(observedProjects)}
+      check={summarizeCrossProjectChecks(observedProjects, "issues")}
+    />
+  );
+}
+
+export default function IssuesPage() {
+  return (
     <AppShell activeSection="Issues">
-      <IssuesView
-        issues={listCrossProjectIssues(observedProjects)}
-        check={summarizeCrossProjectChecks(observedProjects, "issues")}
-      />
+      <Suspense
+        fallback={(
+          <SurfaceLoading
+            title="Issues"
+            message="Reading open GitHub Issues. Partial or unavailable repositories will remain explicit."
+          />
+        )}
+      >
+        <ObservedIssues />
+      </Suspense>
     </AppShell>
   );
 }

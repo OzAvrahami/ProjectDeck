@@ -69,6 +69,8 @@ The workspace maintains a strong project identity and exposes local tabs:
 - Activity
 - Docs
 
+Saved Project identity and the tab structure render ahead of remote observations so provider latency does not hide navigation. Loading copy names the evidence still being checked and never displays placeholder status values. Overview then streams its complete automated orientation model, with the GitHub Development Standard panel resolving as secondary evidence. Issues, Releases, and Activity load only their respective provider evidence; Docs performs no provider observation. Automatic Phase and attention badges appear with the complete Overview evidence rather than being guessed on narrower tabs.
+
 The Overview should feel like a project command center.
 
 The main content contains:
@@ -108,6 +110,8 @@ Resumption is supported in context rather than presented as a separate operating
 5. quick links take the user to the appropriate working tool.
 
 Cached and manually maintained context should appear immediately. Refreshing one source must not block the whole workspace. If nothing meaningful changed, Recent work should say so succinctly instead of replaying history.
+
+For normal warm navigation, visible shell/navigation is budgeted at roughly 250 ms where the database permits it. This is a responsiveness budget, not an artificial delay: full provider-backed content may take longer and remains explicitly loading until its authoritative observation completes.
 
 ## States and feedback
 
