@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ActivityRows } from "../github/activity-view.js";
+import { GitHubDevelopmentStandardPanel } from "../github/development-standard-panel.js";
 import { ProjectMark } from "../portfolio/project-card.js";
 import { filterProjectIssues } from "../../lib/projects/github-summary.js";
 import {
@@ -401,7 +402,12 @@ function RailwayMapping({ project, integration }) {
   );
 }
 
-function WorkspaceOverview({ project, card, railwayIntegration }) {
+function WorkspaceOverview({
+  project,
+  card,
+  railwayIntegration,
+  githubStandardAudit,
+}) {
   const quickLinks = buildQuickLinks(project.resources);
   const recentActivity = project.githubSummary.activity;
   const next = buildProjectNextPresentation(card);
@@ -497,6 +503,16 @@ function WorkspaceOverview({ project, card, railwayIntegration }) {
           <ProviderNote summary={recentActivity} subject="Commit activity" />
           {recentActivity.items.length > 0 ? <ActivityRows items={recentActivity.items.slice(0, 6)} compact /> : <WorkspaceEmpty title={recentActivity.status === "unavailable" ? "Commit activity unavailable" : "No commit activity"} message="No verified recent commits are available for connected repositories." />}
         </WorkspaceSection>
+
+        <WorkspaceSection
+          title="GitHub Development Standard"
+          description="Read-only audit, explicit migration plan, and separately authorized safe changes."
+        >
+          <GitHubDevelopmentStandardPanel
+            initialAudit={githubStandardAudit}
+            slug={project.slug}
+          />
+        </WorkspaceSection>
       </div>
 
       <div className="space-y-7 lg:sticky lg:top-24">
@@ -553,9 +569,17 @@ export function ProjectWorkspace({
   issueType = "all",
   projectUpdated = false,
   railwayIntegration = null,
+  githubStandardAudit = null,
 }) {
   const content = {
-    overview: <WorkspaceOverview project={project} card={card} railwayIntegration={railwayIntegration} />,
+    overview: (
+      <WorkspaceOverview
+        project={project}
+        card={card}
+        railwayIntegration={railwayIntegration}
+        githubStandardAudit={githubStandardAudit}
+      />
+    ),
     issues: <WorkspaceIssues project={project} issueType={issueType} />,
     releases: <WorkspaceReleases project={project} />,
     activity: <WorkspaceActivity project={project} />,

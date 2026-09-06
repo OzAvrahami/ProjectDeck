@@ -71,6 +71,8 @@ Remote repository or deployment information must never imply knowledge of unobse
 
 ProjectDeck should connect to existing tools and link back to them. It should not recreate GitHub, an issue tracker, a deployment console, or a second task-management system.
 
+For an already-connected Project, the Workspace can audit observable GitHub configuration against Oz GitHub Development Standard v1, show the exact differences, and build a deterministic migration plan. Audit and planning are always read-only. Applying changes is a separate, explicit action and is limited to proven additive changes; ambiguous field mappings, existing Issue Status/Priority data, views, native workflows, releases, scope labels, and repository files remain manual or unsupported rather than being guessed or rewritten.
+
 ### Automation assists orientation
 
 Automation should summarize, connect, and suggest. It should preserve user intent, expose important uncertainty when needed, and avoid turning the interface into a governance or confidence-analysis console.

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  fetchGitHubProjectReadModel,
   fetchUserGitHubProjects,
   normalizeGitHubProjectItem,
   resolveGitHubProjectForRepositories,
@@ -147,6 +148,113 @@ describe("GitHub Projects v2 read model", () => {
       statusRecognized: false,
       priority: null,
       priorityRecognized: true,
+    });
+  });
+
+  it("normalizes Project fields, views, workflows, and Issue values for Standard audit reuse", async () => {
+    const field = (id, name, options) => ({
+      __typename: "ProjectV2SingleSelectField",
+      id,
+      name,
+      options: options.map((option, index) => ({
+        id: `${id}-${index}`,
+        name: option,
+        color: "GRAY",
+        description: "",
+      })),
+    });
+    const node = {
+      id: "project-id",
+      number: 9,
+      title: "ProjectDeck Development",
+      url: "https://github.com/users/OzAvrahami/projects/9",
+      fields: {
+        totalCount: 2,
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [
+          field("status", "Status", ["Backlog", "Ready", "In Progress", "Verify", "Done"]),
+          field("priority", "Priority", ["P0 — Critical", "P1 — High", "P2 — Medium", "P3 — Low"]),
+        ],
+      },
+      views: {
+        totalCount: 2,
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [
+          {
+            id: "view-development",
+            number: 1,
+            name: "Development",
+            layout: "BOARD_LAYOUT",
+            filter: "",
+            groupByFields: { nodes: [] },
+            verticalGroupByFields: { nodes: [{ __typename: "ProjectV2SingleSelectField", id: "status", name: "Status" }] },
+          },
+          {
+            id: "view-all",
+            number: 2,
+            name: "All work",
+            layout: "TABLE_LAYOUT",
+            filter: "",
+            groupByFields: { nodes: [] },
+            verticalGroupByFields: { nodes: [] },
+          },
+        ],
+      },
+      workflows: {
+        totalCount: 1,
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [{ id: "workflow", number: 1, name: "Item closed", enabled: true }],
+      },
+      items: {
+        totalCount: 1,
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [{
+          id: "item-id",
+          content: {
+            __typename: "Issue",
+            id: "issue-id",
+            number: 9,
+            title: "Audit workflows",
+            state: "OPEN",
+            updatedAt: "2026-09-05T10:00:00Z",
+            url: "https://github.com/OzAvrahami/ProjectDeck/issues/9",
+            repository: { id: "repo-id", databaseId: 1, nameWithOwner: "OzAvrahami/ProjectDeck" },
+            labels: { nodes: [{ name: "feature" }] },
+          },
+          fieldValues: {
+            nodes: [
+              { __typename: "ProjectV2ItemFieldSingleSelectValue", name: "In Progress", field: { name: "Status" } },
+              { __typename: "ProjectV2ItemFieldSingleSelectValue", name: "P1 — High", field: { name: "Priority" } },
+            ],
+          },
+        }],
+      },
+    };
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: { node } }), { status: 200 }),
+    );
+
+    const result = await fetchGitHubProjectReadModel({
+      id: "project-id",
+      linkedRepositories: [{ fullName: "OzAvrahami/ProjectDeck" }],
+      linkedRepositoryCount: 1,
+      repositoryEvidencePartial: false,
+    }, { token: "projects-token", fetchImpl });
+
+    expect(result).toMatchObject({
+      statusField: { available: true, standard: true },
+      priorityField: { available: true, standard: true },
+      fieldsPartial: false,
+      viewsPartial: false,
+      workflowsPartial: false,
+      workflows: [{ name: "Item closed", enabled: true }],
+      items: [{ number: 9, status: "In Progress", priority: "P1 — High", labels: ["feature"] }],
+    });
+    expect(result.views[0]).toMatchObject({
+      name: "Development",
+      layout: "BOARD_LAYOUT",
+      groupByFields: [],
+      verticalGroupByFields: [{ name: "Status" }],
     });
   });
 

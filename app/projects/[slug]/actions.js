@@ -14,9 +14,65 @@ import {
 } from "../../../lib/railway/connection.js";
 import { updateProviderResourceAssociation } from "../../../lib/provider-connections/queries.js";
 import { validateHealthMonitorInput } from "../../../lib/projects/health-monitor-config.js";
+import { observeProjectsGitHub } from "../../../lib/projects/github-observations.js";
+import { observeProjectWorkflowEvidence } from "../../../lib/projects/phase-observations.js";
+import { observeGitHubDevelopmentStandard } from "../../../lib/github/standard/observe.js";
+import { applyGitHubDevelopmentStandard } from "../../../lib/github/standard/apply.js";
 
 function field(formData, name) {
   return String(formData.get(name) ?? "").trim();
+}
+
+async function loadGitHubStandardAudit(slug) {
+  const project = await getProjectWorkspaceBySlug(slug);
+
+  if (!project) return null;
+
+  const [githubProjects, workflowEvidence] = await Promise.all([
+    observeProjectsGitHub([project], { features: ["releases"] }),
+    observeProjectWorkflowEvidence([project], { includeManualProjects: true }),
+  ]);
+  const observedProject = {
+    ...githubProjects[0],
+    githubWorkflowEvidence: workflowEvidence.get(project.id) ?? null,
+  };
+
+  return observeGitHubDevelopmentStandard(observedProject);
+}
+
+export async function applyGitHubStandardAction(_previousState, formData) {
+  await requireAccessSession();
+  const slug = field(formData, "slug");
+  const expectedFingerprint = field(formData, "fingerprint");
+
+  if (!slug || !expectedFingerprint) {
+    return {
+      status: "error",
+      message: "The Standard migration plan is missing required verification context.",
+    };
+  }
+
+  try {
+    const result = await applyGitHubDevelopmentStandard({
+      expectedFingerprint,
+      loadAudit: async () => {
+        const audit = await loadGitHubStandardAudit(slug);
+        if (!audit) throw new Error("Project unavailable");
+        return audit;
+      },
+    });
+
+    if ((result.application?.succeeded ?? []).length > 0) {
+      revalidatePath(`/projects/${slug}`);
+    }
+
+    return result;
+  } catch {
+    return {
+      status: "error",
+      message: "ProjectDeck could not safely prepare or verify the GitHub Standard apply operation.",
+    };
+  }
 }
 
 export async function createHealthMonitorAction(_previousState, formData) {

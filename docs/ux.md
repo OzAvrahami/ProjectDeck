@@ -78,6 +78,7 @@ The main content contains:
 - **Next up** — the automatic GitHub Project candidate or explicit manual override, with concise Issue, Status, Priority, and Component context where useful;
 - **Needs attention** — selective intervention items;
 - **Recent work** — recent observed development activity, clearly distinguished from inferred progress.
+- **GitHub Development Standard** — a compact Standard-v1 audit with differences, migration classifications, write availability, and an explicit safe Apply action.
 
 A secondary rail contains:
 
@@ -87,6 +88,8 @@ A secondary rail contains:
 - Quick links.
 
 The main column explains the project; the rail provides supporting facts and routes. On narrower layouts, the rail moves below the main content without changing the information priority.
+
+The Standard panel stays collapsed and restrained when observable areas conform. Differences show their current and desired state, repository/Project target, and whether they are additive, manual, unsupported, blocked, or unknown. Each safe step reports whether its dedicated Projects-write or repository-label-write capability is available; missing one capability disables only its matching steps. Apply is never triggered by viewing or refreshing the audit. The browser submits only the Project identity and plan fingerprint; after explicit confirmation, the server rebuilds the plan and the panel presents the provider re-read as the verified result. Multi-repository Products show labels/releases per repository while Status, Priority, views, and workflows remain scoped to the single safely resolved shared GitHub Project.
 
 A secondary Edit Project action opens a focused form for ProjectDeck-owned context. Display-name changes keep the existing project URL stable. Phase offers Automatic plus explicit Planning, Development, Maintenance, Paused, and Archived overrides. Unknown is never a manual option. Next offers Automatic or Manual override; selecting Automatic clears the stored `next_action`, while a non-empty manual value takes precedence over provider evidence. Phase and Needs Attention use separate controls; clearing Needs Attention removes its summary from current presentation. Provider observations are visible but cannot be edited through this form.
 

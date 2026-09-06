@@ -680,6 +680,54 @@ select:focus-visible {
   white-space: nowrap;
 }
 
+.standard-audit-status,
+.standard-classification {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-space-mono), monospace;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1rem;
+  text-transform: uppercase;
+}
+
+.standard-audit-status {
+  padding: 0.15rem 0.45rem;
+}
+
+.standard-classification {
+  padding: 0.1rem 0.4rem;
+}
+
+.standard-audit-conformant {
+  border-color: color-mix(in oklab, var(--ready) 42%, var(--line));
+  background: color-mix(in oklab, var(--ready) 9%, transparent);
+  color: var(--ready);
+}
+
+.standard-audit-differences,
+.standard-safe_change {
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--line));
+  background: color-mix(in oklab, var(--accent) 9%, transparent);
+  color: var(--accent);
+}
+
+.standard-audit-incomplete,
+.standard-manual_required,
+.standard-blocked {
+  border-color: color-mix(in oklab, var(--attention) 38%, var(--line));
+  background: var(--attention-background);
+  color: var(--attention);
+}
+
+.standard-unsupported,
+.standard-unknown {
+  color: var(--muted);
+}
+
 @media (max-width: 640px) {
   .continue-card {
     align-items: flex-start;

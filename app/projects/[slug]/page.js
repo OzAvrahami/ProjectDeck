@@ -7,6 +7,7 @@ import { buildProjectCardViewModel } from "../../../lib/projects/portfolio.js";
 import { getProjectWorkspaceBySlug } from "../../../lib/projects/queries.js";
 import { WORKSPACE_TABS } from "../../../lib/projects/navigation.js";
 import { getRailwayIntegrationView } from "../../../lib/railway/connection.js";
+import { observeGitHubDevelopmentStandard } from "../../../lib/github/standard/observe.js";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,9 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
   ]);
   const [observedProject] = observedProjects;
   const card = buildProjectCardViewModel(observedProject);
+  const githubStandardAudit = activeTab === "overview"
+    ? await observeGitHubDevelopmentStandard(observedProject).catch(() => null)
+    : null;
 
   return (
     <AppShell workspaceName={card.name}>
@@ -57,6 +61,7 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
         issueType={issueType}
         projectUpdated={projectUpdated}
         railwayIntegration={railwayIntegration}
+        githubStandardAudit={githubStandardAudit}
       />
     </AppShell>
   );
