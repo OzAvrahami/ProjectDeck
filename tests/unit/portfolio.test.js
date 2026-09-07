@@ -215,6 +215,7 @@ describe("Portfolio view model", () => {
       description: "1 of 2 repositories checked",
     });
     expect(card.releaseSummary).toEqual({
+      externalRelease: null,
       label: "Desktop · v0.2.0",
       href: "/projects/limitpact?tab=releases",
       state: "exact",

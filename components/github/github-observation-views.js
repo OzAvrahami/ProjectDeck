@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { formatRelativeTime, normalizeProjectAccent } from "../../lib/projects/portfolio.js";
 import { IssuePagination } from "./issue-pagination.js";
+import { ReleaseLink, ReleasePublishedTime } from "./release-link.js";
+import { projectReleasesHref } from "../../lib/projects/navigation.js";
 
 const FAILURE_REASON_LABELS = {
   missing_token: "GitHub is not configured",
@@ -13,14 +15,14 @@ const FAILURE_REASON_LABELS = {
   provider: "GitHub temporarily unavailable",
 };
 
-function ProjectScope({ item }) {
+function ProjectScope({ item, href }) {
   const accentHue = normalizeProjectAccent(
     item.project.accent,
     item.project.name,
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 [overflow-wrap:anywhere]">
       <span
         className="h-1.5 w-1.5 shrink-0 rounded-full"
         style={{
@@ -28,13 +30,21 @@ function ProjectScope({ item }) {
         }}
         aria-hidden="true"
       />
-      <span className="font-mono text-[11.5px] text-muted">
-        {item.project.name}
-      </span>
+      {href ? (
+        <Link
+          className="release-navigation min-w-0 text-xs font-semibold"
+          href={href}
+          aria-label={`View Releases for ${item.project.name}`}
+        >
+          {item.project.name}
+        </Link>
+      ) : (
+        <span className="font-mono text-[11.5px] text-muted">{item.project.name}</span>
+      )}
       <span className="text-muted/45" aria-hidden="true">
         /
       </span>
-      <span className="font-mono text-[11.5px] text-muted">
+      <span className="min-w-0 font-mono text-[11.5px] text-muted">
         {item.component?.name
           ? `${item.component.name} · ${item.repository.fullName}`
           : item.repository.fullName}
@@ -202,12 +212,12 @@ export function ReleasesView({ releases, check }) {
       };
     } else if (check.checkedRepositoryCount === 0) {
       emptyState = {
-        title: "Releases unavailable",
+        title: "Release unavailable",
         message: "ProjectDeck could not verify Releases for the connected repositories.",
       };
     } else if (check.failedRepositoryCount > 0) {
       emptyState = {
-        title: "No Releases found in checked repositories",
+        title: "Release information incomplete",
         message: "Some repositories remain unavailable, so other Releases may be unknown.",
       };
     } else {
@@ -226,25 +236,23 @@ export function ReleasesView({ releases, check }) {
         check={check}
       />
       <ProviderNotice check={check} subject="Releases" />
+      {releases.length > 0 && check.failedRepositoryCount > 0 ? (
+        <p className="mb-4 text-sm font-semibold">Release information incomplete</p>
+      ) : null}
 
       {releases.length > 0 ? (
         <div className="border-b border-line">
           {releases.map((release) => (
             <article className="border-t border-line py-4" key={release.id}>
-              <div className="flex items-start justify-between gap-5">
+              <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-5">
                 <div className="min-w-0">
-                  <ProjectScope item={release} />
+                  <ProjectScope item={release} href={projectReleasesHref(release.project.slug)} />
                   <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <a
-                      className="font-mono text-[14px] font-semibold hover:text-accent hover:underline"
-                      href={release.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <span className="font-mono text-[14px] font-semibold [overflow-wrap:anywhere]">
                       {release.tagName}
-                    </a>
+                    </span>
                     {release.name && release.name !== release.tagName ? (
-                      <span className="text-sm text-subtle">{release.name}</span>
+                      <span className="text-sm text-subtle [overflow-wrap:anywhere]">{release.name}</span>
                     ) : null}
                     {release.prerelease ? (
                       <span className="font-mono text-[11px] text-muted">
@@ -252,9 +260,12 @@ export function ReleasesView({ releases, check }) {
                       </span>
                     ) : null}
                   </div>
+                  <div className="mt-2">
+                    <ReleaseLink release={release}>Open Release on GitHub</ReleaseLink>
+                  </div>
                 </div>
                 <span className="shrink-0 pt-0.5 font-mono text-[11.5px] text-muted">
-                  {formatRelativeTime(release.publishedAt) ?? "Date unknown"}
+                  <ReleasePublishedTime value={release.publishedAt} />
                 </span>
               </div>
             </article>

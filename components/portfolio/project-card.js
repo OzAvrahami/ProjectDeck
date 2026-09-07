@@ -120,16 +120,33 @@ function ReleaseSummary({ card }) {
 
   return (
     <div className="project-card-metadata-item">
-      <dt className="project-card-eyebrow">Release</dt>
-      <dd className="mt-1.5 min-w-0">
+      <dt className="project-card-eyebrow">
         <Link
-          className="project-card-metadata-link project-card-secondary-link"
+          className="project-card-secondary-link release-navigation"
           href={card.releaseSummary.href}
-          title={card.releaseSummary.description ?? card.releaseSummary.label}
-          aria-label={`View Releases for ${card.name}: ${card.releaseSummary.label}`}
+          aria-label={`View Releases for ${card.name}`}
         >
-          {card.releaseSummary.label}
+          Releases <span aria-hidden="true">→</span>
         </Link>
+      </dt>
+      <dd className="mt-1.5 min-w-0">
+        {card.releaseSummary.externalRelease ? (
+          <a
+            className="project-card-secondary-link project-card-release-link release-navigation"
+            href={card.releaseSummary.externalRelease.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open published GitHub Release ${card.releaseSummary.label} for ${card.name} (opens in a new tab)`}
+            title={`Published GitHub Release · ${card.releaseSummary.label}`}
+          >
+            <span className="project-card-metadata-link">{card.releaseSummary.label}</span>
+            <span className="shrink-0" aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <span className="project-card-metadata-link" title={card.releaseSummary.description ?? card.releaseSummary.label}>
+            {card.releaseSummary.label}
+          </span>
+        )}
       </dd>
     </div>
   );

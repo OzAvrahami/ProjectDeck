@@ -514,9 +514,33 @@ select:focus-visible {
   line-height: 1.15rem;
 }
 
-.project-card-metadata-link:hover {
+.project-card-release-link:hover .project-card-metadata-link {
   color: var(--project-color);
   text-decoration: underline;
+}
+
+.release-navigation {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+}
+
+.release-navigation:hover {
+  color: var(--accent);
+}
+
+.project-card-release-link {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.project-card-release-link .project-card-metadata-link {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .project-card-latest,

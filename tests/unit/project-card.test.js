@@ -15,7 +15,7 @@ const cssSource = source("../../app/globals.css");
 const homeSource = source("../../components/portfolio/portfolio-home.js");
 const projectsSource = source("../../components/projects/projects-view.js");
 const portfolioSource = source("../../lib/projects/portfolio.js");
-const workspaceSource = source("../../components/workspace/project-workspace.js");
+const workspaceSource = source("../../components/workspace/workspace-releases.js");
 
 describe("Project card hierarchy", () => {
   it("renders the full signal hierarchy in deliberate source order", () => {
@@ -121,8 +121,8 @@ describe("Project card portfolio metadata", () => {
     expect(cardSource).toContain("card.releaseSummary.href");
     expect(cardSource).toContain("card.releaseSummary.label");
     expect(cardSource).toContain("View Releases for");
-    expect(workspaceSource).toContain("No published GitHub Release");
-    expect(workspaceSource).toContain("Release data unavailable");
+    expect(workspaceSource).toContain("No published Release");
+    expect(workspaceSource).toContain("Release unavailable");
   });
 
   it("does not duplicate the raw Component list on compact cards", () => {
@@ -204,7 +204,8 @@ describe("Project card layout, themes, and interactions", () => {
 
   it("does not perform provider work from card rendering", () => {
     expect(cardSource).not.toMatch(/\bfetch\s*\(/);
-    expect(cardSource).not.toMatch(/observeProjects|github|railway|postgres|provider/i);
+    expect(cardSource).not.toMatch(/observeProjects|railway|postgres|provider/i);
+    expect(cardSource).not.toMatch(/from ["'][^"']*lib\/github\//);
     expect(cardSource.match(/^import /gm)).toHaveLength(2);
   });
 });

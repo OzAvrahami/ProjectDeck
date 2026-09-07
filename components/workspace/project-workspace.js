@@ -7,6 +7,7 @@ import { IssuePagination } from "../github/issue-pagination.js";
 import { ProjectMark } from "../portfolio/project-card.js";
 import {
   projectIssuesHref,
+  projectReleasesHref,
   WORKSPACE_TABS,
 } from "../../lib/projects/navigation.js";
 import {
@@ -23,6 +24,7 @@ import {
   updateRailwayAssociationAction,
 } from "../../app/projects/[slug]/actions.js";
 import { RAILWAY_MAPPINGS_PATH } from "../../lib/railway/routes.js";
+import { WorkspaceReleases } from "./workspace-releases.js";
 import { HealthMonitorForm } from "./health-monitor-form.js";
 
 const GITHUB_FAILURE_LABELS = {
@@ -113,80 +115,6 @@ function WorkspaceIssues({ project, issueType }) {
           projectIssuesHref(project.slug, { type: issueType, cursor })
         }
       />
-    </WorkspaceSection>
-  );
-}
-
-function formatPublishedDate(value) {
-  if (!value) return null;
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return null;
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function WorkspaceReleases({ project }) {
-  const summary = project.githubSummary.releases;
-
-  return (
-    <WorkspaceSection title="Releases" description="Latest published GitHub Release for each connected repository, with Component scope preserved.">
-      <ProviderNote summary={summary} subject="Release information" />
-      {summary.repositories.length > 0 ? (
-        <div className="border-b border-line">
-          {summary.repositories.map((repository) => (
-            <article className="border-t border-line py-5" key={repository.resourceId}>
-              <p className="font-semibold">
-                {repository.component?.name ?? repository.repository?.fullName ?? "Repository"}
-              </p>
-              {repository.component?.name && repository.repository?.fullName ? (
-                <p className="mt-1 font-mono text-[11px] text-muted">
-                  {repository.repository.fullName}
-                </p>
-              ) : null}
-              {repository.providerStatus === "unavailable" ? (
-                <div className="mt-3">
-                  <p className="text-sm font-semibold text-subtle">Release data unavailable</p>
-                  <p className="mt-1 text-xs text-muted">
-                    {GITHUB_FAILURE_LABELS[repository.error?.code] ?? "GitHub temporarily unavailable"}
-                  </p>
-                </div>
-              ) : repository.latestRelease ? (
-                <div className="mt-3">
-                  <div className="flex flex-wrap items-baseline gap-3">
-                    <a className="font-mono text-sm font-semibold hover:text-accent hover:underline" href={repository.latestRelease.url} target="_blank" rel="noreferrer">
-                      {repository.latestRelease.tagName}
-                    </a>
-                    {repository.latestRelease.prerelease ? (
-                      <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Pre-release</span>
-                    ) : null}
-                    {repository.latestRelease.name && repository.latestRelease.name !== repository.latestRelease.tagName ? (
-                      <span className="text-sm text-subtle">{repository.latestRelease.name}</span>
-                    ) : null}
-                  </div>
-                  <p className="mt-2 font-mono text-[11px] text-muted">
-                    {formatPublishedDate(repository.latestRelease.publishedAt)
-                      ? `Published ${formatPublishedDate(repository.latestRelease.publishedAt)}`
-                      : "Published date unavailable"}
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-subtle">No published GitHub Release</p>
-              )}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <WorkspaceEmpty
-          title="No connected GitHub repositories"
-          message="Published Releases appear only for connected GitHub repository Resources."
-        />
-      )}
     </WorkspaceSection>
   );
 }
@@ -548,8 +476,9 @@ function WorkspaceOverview({
         </aside>
 
         <aside className="workspace-rail-section">
-          <h3 className="workspace-rail-title">Latest release</h3>
-          {project.githubSummary.releases.compactLabel ? <p className="font-mono text-sm font-semibold">{project.githubSummary.releases.compactLabel}</p> : <p className="text-xs leading-5 text-muted">No single safe Project-level Release label</p>}
+          <h3 className="workspace-rail-title">Releases</h3>
+          <p className="font-mono text-sm font-semibold [overflow-wrap:anywhere]">{project.githubSummary.releases.safeCardLabel ?? "No connected GitHub repositories"}</p>
+          <Link className="release-navigation mt-2 inline-block py-1 text-xs font-semibold" href={projectReleasesHref(project.slug)}>View Releases <span aria-hidden="true">→</span></Link>
         </aside>
 
         <aside className="workspace-rail-section">

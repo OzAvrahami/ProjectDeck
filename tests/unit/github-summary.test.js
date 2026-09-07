@@ -394,7 +394,7 @@ describe("Project GitHub aggregation", () => {
     expect(summary.releases).toMatchObject({
       state: "exact",
       releaseBearingRepositoryCount: 0,
-      safeCardLabel: "No release",
+      safeCardLabel: "No published Release",
       hasSingleSafeProjectRelease: false,
     });
   });
@@ -410,7 +410,7 @@ describe("Project GitHub aggregation", () => {
 
     expect(noRelease.releases).toMatchObject({
       state: "exact",
-      safeCardLabel: "No release",
+      safeCardLabel: "No published Release",
     });
     expect(unavailable.releases).toMatchObject({
       state: "unavailable",
@@ -488,7 +488,7 @@ describe("Project GitHub aggregation", () => {
 
     expect(summary.releases).toMatchObject({
       state: "exact",
-      safeCardLabel: "No releases",
+      safeCardLabel: "No published Release",
       releaseBearingRepositoryCount: 0,
     });
   });
