@@ -543,6 +543,36 @@ select:focus-visible {
   text-underline-offset: 3px;
 }
 
+.production-state-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.production-state-signal {
+  min-width: 0;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.production-state-signal + .production-state-signal {
+  border-top: 1px solid var(--line);
+}
+
+@media (min-width: 1024px) {
+  .production-state-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .production-state-signal + .production-state-signal {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}
+
 .project-card-latest,
 .project-card-last-work {
   margin-top: auto;

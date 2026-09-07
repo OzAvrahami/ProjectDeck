@@ -25,6 +25,8 @@ import {
 } from "../../app/projects/[slug]/actions.js";
 import { RAILWAY_MAPPINGS_PATH } from "../../lib/railway/routes.js";
 import { WorkspaceReleases } from "./workspace-releases.js";
+import { ProductionState } from "./production-state.js";
+import { isDeploymentObservation } from "../../lib/projects/production-state.js";
 import { HealthMonitorForm } from "./health-monitor-form.js";
 
 const GITHUB_FAILURE_LABELS = {
@@ -207,10 +209,10 @@ function HealthEvidence({ project }) {
 
   return (
     <WorkspaceSection
-      title="Health"
-      description="Observed operational state. Health is independent from Phase and Next."
+      title="Health evidence"
+      description="Runtime status from configured monitors. Deployment monitors contribute provider state; they are not HTTP or database checks."
     >
-      <div className="flex items-center gap-2">
+      <div id="health-evidence" className="flex scroll-mt-24 items-center gap-2">
         <span className={`health-dot health-${health.status}`} aria-hidden="true" />
         <p className="text-base font-semibold">{health.label}</p>
       </div>
@@ -225,7 +227,10 @@ function HealthEvidence({ project }) {
                     {observation.component?.name ? `${observation.component.name} · ` : ""}
                     {observation.monitor.label}
                   </p>
-                  <p className="mt-1 flex items-center gap-2 font-mono text-[10.5px] text-muted">
+                  <p className="mt-1 text-xs text-muted">
+                    {isDeploymentObservation(observation) ? "Deployment monitor · Health contribution" : "Runtime check · Health contribution"}
+                  </p>
+                  <p className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-muted">
                     <span>{providerLabel(observation.provider)}</span>
                     <span aria-hidden="true">·</span>
                     <span className="flex items-center gap-1.5">
@@ -362,6 +367,7 @@ function WorkspaceOverview({
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,640px)_272px] lg:items-start lg:gap-11">
+      <div className="min-w-0 lg:col-span-2"><ProductionState project={project} /></div>
       <div className="space-y-11">
         <WorkspaceSection title="Phase">
           <div className="flex items-center gap-2 text-sm">

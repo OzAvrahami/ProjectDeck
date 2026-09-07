@@ -77,6 +77,12 @@ The Issues tab and global Issues view show at most 25 Issues per page with URL-b
 
 The Overview should feel like a project command center.
 
+Its **Project state** section places three independent definitions together: **Release — Published version from GitHub**, **Deployment — Provider deployment evidence**, and **Health — Runtime status from configured monitors**. On desktop they appear alongside each other; tablet and mobile stack them in that order. Component names head their own groups, repository and service/environment identities stay beside the facts they qualify, and Project Health is explicitly labeled as a combined monitor result. There is no combined Product version or deployment badge.
+
+Deployment separates **Serving production** (only for a verified production environment) or **Active deployment** from **Latest deployment attempt**. Active IDs and attempt IDs can differ. Provider failures say **Deployment unavailable**; partial reads say **Deployment information incomplete** while retaining verified attempt evidence. A successful attempt without verified active evidence never becomes serving. Legacy connections that cannot independently observe serving deployments say so. A checked empty deployment result is **Not deployed**, an unconnected scope is **Not connected**, and disabled observations remain explicitly disabled with unknown deployment state.
+
+Health always names the monitor types behind its result. Deployment-only Health explicitly states that no HTTP or database runtime check contributes; detailed rows distinguish **Deployment monitor · Health contribution** from **Runtime check · Health contribution**. A Healthy label never claims that the latest Release is deployed. The separate Releases tab reminds the user that publication does not confirm deployment or runtime Health. Cards retain their existing hierarchy and Release links with compact **Health · runtime** and **Published** supporting cues; no Deployment panel or Live badge is added to cards.
+
 The main content contains:
 
 - **Where we are** — a concise current-state summary;

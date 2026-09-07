@@ -51,7 +51,7 @@ describe("Project card hierarchy", () => {
   it("keeps Phase and Health separate, textual, and semantically grouped", () => {
     expect(cardSource).toContain('<dl className="project-card-state"');
     expect(cardSource).toContain('<dt className="project-card-state-label">Phase</dt>');
-    expect(cardSource).toContain('<dt className="project-card-state-label">Health</dt>');
+    expect(cardSource).toContain('<dt className="project-card-state-label">Health · runtime</dt>');
     expect(cardSource).toContain("{card.phaseLabel}");
     expect(cardSource).toContain("{card.health.label}");
     expect(cardSource).toContain("phase-${card.phase}");

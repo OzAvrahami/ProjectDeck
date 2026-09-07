@@ -61,6 +61,14 @@ Navigation prioritizes orientation over secondary provider latency. The applicat
 
 Health is provider-agnostic. Railway and Vercel deployment observations, a bounded read-only PostgreSQL connectivity check, and an explicit HTTP/HTTPS health endpoint all normalize into the same resource evidence. Railway is connected once at provider level through read-only OAuth; authorized workspaces, projects, environments, services, and deployment state are discovered for the whole portfolio. Exact GitHub source identity can associate a production service automatically, while ambiguous resources require explicit mapping. Only enabled observations explicitly marked as affecting Project Health participate in the top-level result. No configured observation means Not monitored; configured monitoring whose state cannot be established means Unknown.
 
+### Release, Deployment and Health answer independent questions
+
+**Release** means the published version from GitHub. **Deployment** means provider evidence about a serving deployment or the latest deployment attempt, scoped to its service and environment. **Health** means runtime status from explicitly configured monitors. A published Release does not establish a deployment; a successful deployment is not an independent runtime check; Healthy does not identify which Release is deployed. Tags, manifests and deployment version strings never establish a published Release.
+
+Workspace Overview presents the three concepts together with separate evidence and provenance. Component Releases and deployments remain independent; Project Health is a rollup of health-affecting monitors, not a Product-wide Release or deployment claim. Serving and latest-attempt evidence can disagree legitimately. Absence of a connected deployment observation means Not connected; a checked empty deployment result means Not deployed; provider failure remains Deployment unavailable. Not monitored means no enabled health-affecting monitor, while Unknown means the configured monitoring cannot establish state.
+
+Deployment monitors retain their existing Health contribution rules. Health identifies its actual basis: HTTP checks, PostgreSQL checks, or provider deployment monitors. A result based only on deployment monitors explicitly says that no HTTP or database runtime check contributes. This preserves the monitoring contract without presenting provider success as direct endpoint verification. Release-to-deployment drift detection is a separate capability.
+
 ### Activity is not automatically progress
 
 ProjectDeck should favor meaningful outcomes—such as a release, resolved issue, decision, rollback, or learned constraint—over activity counts. Failure and rollback may still be important project history.

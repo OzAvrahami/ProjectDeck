@@ -6,6 +6,7 @@ import { observeRailwayConnectionHealth } from "../../../../../lib/health/provid
 import { listPortfolioProjects } from "../../../../../lib/projects/queries.js";
 import { getRailwayIntegrationView } from "../../../../../lib/railway/connection.js";
 import { buildRailwayMappingsView } from "../../../../../lib/railway/mappings.js";
+import { deploymentAttemptLabel } from "../../../../../lib/projects/production-state.js";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,9 @@ function DeploymentSummary({ deployment }) {
   return (
     <div>
       <p className="text-xs font-semibold capitalize text-subtle">
-        Latest deployment · {deployment.status.replaceAll("_", " ")}
+        Latest deployment attempt · {deploymentAttemptLabel(deployment.providerStatus)}
       </p>
+      <p className="mt-1 text-xs text-muted">Deployment monitor Health contribution: {deployment.status.replaceAll("_", " ")}</p>
       <p className="mt-1 text-xs leading-5 text-muted">{deployment.reason}</p>
     </div>
   );

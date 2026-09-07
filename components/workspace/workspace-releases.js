@@ -12,6 +12,9 @@ export function WorkspaceReleases({ project }) {
           ? "Latest published GitHub Release per repository. Components release independently."
           : "Latest published GitHub Release. Open GitHub for Release details and history."}
       </p>
+      <p className="mb-6 text-xs leading-5 text-muted">
+        A published version does not confirm a production deployment or runtime Health.
+      </p>
       {summary.status === "partial" || summary.status === "unavailable" ? (
         <aside className="mb-4 rounded-lg border border-line bg-background px-3 py-2 text-sm text-subtle">
           <p className="font-semibold">

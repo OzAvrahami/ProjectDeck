@@ -65,7 +65,7 @@ function ProjectState({ card }) {
         </dd>
       </div>
       <div className="project-card-state-item" title={card.health.reason}>
-        <dt className="project-card-state-label">Health</dt>
+        <dt className="project-card-state-label">Health · runtime</dt>
         <dd className="project-card-state-value">
           <span className={`health-dot health-${card.health.status}`} aria-hidden="true" />
           <span>{card.health.label}</span>
@@ -120,7 +120,7 @@ function ReleaseSummary({ card }) {
 
   return (
     <div className="project-card-metadata-item">
-      <dt className="project-card-eyebrow">
+      <dt className="project-card-eyebrow flex flex-wrap items-baseline gap-x-2">
         <Link
           className="project-card-secondary-link release-navigation"
           href={card.releaseSummary.href}
@@ -128,6 +128,7 @@ function ReleaseSummary({ card }) {
         >
           Releases <span aria-hidden="true">→</span>
         </Link>
+        {card.releaseSummary.externalRelease ? <span className="project-card-source">Published</span> : null}
       </dt>
       <dd className="mt-1.5 min-w-0">
         {card.releaseSummary.externalRelease ? (
