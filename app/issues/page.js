@@ -6,16 +6,17 @@ import {
   ObservationDatabaseError,
 } from "../../components/github/github-observation-views.js";
 import { SurfaceLoading } from "../../components/surface-loading.js";
-import { observeProjectsGitHub } from "../../lib/projects/github-observations.js";
+import { observeProjectsGitHubIssuePage } from "../../lib/projects/github-observations.js";
 import {
   listCrossProjectIssues,
   summarizeCrossProjectChecks,
+  summarizeCrossProjectIssueCounts,
 } from "../../lib/projects/github-summary.js";
 import { listPortfolioProjects } from "../../lib/projects/queries.js";
 
 export const dynamic = "force-dynamic";
 
-async function ObservedIssues() {
+async function ObservedIssues({ issueType, cursor }) {
   let projects;
 
   try {
@@ -26,19 +27,28 @@ async function ObservedIssues() {
     );
   }
 
-  const observedProjects = await observeProjectsGitHub(projects, {
-    features: ["issues"],
+  const result = await observeProjectsGitHubIssuePage(projects, {
+    type: issueType,
+    cursor,
   });
+  const observedProjects = result.projects;
 
   return (
     <IssuesView
       issues={listCrossProjectIssues(observedProjects)}
       check={summarizeCrossProjectChecks(observedProjects, "issues")}
+      counts={summarizeCrossProjectIssueCounts(observedProjects)}
+      pagination={result.pagination}
+      issueType={issueType}
     />
   );
 }
 
-export default function IssuesPage() {
+export default async function IssuesPage({ searchParams }) {
+  const query = await searchParams;
+  const issueType = query?.type === "bug" ? "bug" : "all";
+  const cursor = typeof query?.cursor === "string" ? query.cursor : null;
+
   return (
     <AppShell activeSection="Issues">
       <Suspense
@@ -49,7 +59,7 @@ export default function IssuesPage() {
           />
         )}
       >
-        <ObservedIssues />
+        <ObservedIssues issueType={issueType} cursor={cursor} />
       </Suspense>
     </AppShell>
   );

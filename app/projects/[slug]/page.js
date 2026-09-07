@@ -80,6 +80,8 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
     : "overview";
   const projectUpdated = query?.updated === "1";
   const issueType = query?.type === "bug" ? "bug" : "all";
+  const issueCursor =
+    typeof query?.cursor === "string" ? query.cursor : null;
   let project;
 
   try {
@@ -106,6 +108,9 @@ export default async function ProjectIdentityPage({ params, searchParams }) {
   const observedProjectPromise = observeProjectWorkspaceSurface(
     project,
     activeTab,
+    {
+      issuePage: { type: issueType, cursor: issueCursor },
+    },
   );
   const railwayIntegrationPromise = requirements.railwayIntegration
     ? getRailwayIntegrationView().catch(() => null)

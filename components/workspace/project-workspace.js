@@ -3,8 +3,8 @@ import { Suspense } from "react";
 
 import { ActivityRows } from "../github/activity-view.js";
 import { GitHubDevelopmentStandardPanel } from "../github/development-standard-panel.js";
+import { IssuePagination } from "../github/issue-pagination.js";
 import { ProjectMark } from "../portfolio/project-card.js";
-import { filterProjectIssues } from "../../lib/projects/github-summary.js";
 import {
   projectIssuesHref,
   WORKSPACE_TABS,
@@ -53,7 +53,7 @@ function ProviderNote({ summary, subject }) {
 
 function WorkspaceIssues({ project, issueType }) {
   const summary = project.githubSummary.issues;
-  const issues = filterProjectIssues(summary.items, issueType);
+  const issues = summary.items;
   const partial = summary.status === "partial";
   const allCount = ["complete", "partial"].includes(summary.status)
     ? `${summary.openIssueCount}${partial ? "+" : ""}`
@@ -85,7 +85,7 @@ function WorkspaceIssues({ project, issueType }) {
         <div className="border-b border-line">
           {issues.map((issue) => (
             <article className="border-t border-line py-4" key={issue.id}>
-              <div className="flex items-start justify-between gap-5">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:justify-between sm:gap-5">
                 <div className="min-w-0">
                   <p className="font-mono text-[11px] text-muted">
                     {issue.component?.name ? `${issue.component.name} · ` : ""}{issue.repository.fullName} · #{issue.number}
@@ -107,6 +107,12 @@ function WorkspaceIssues({ project, issueType }) {
           message={summary.status === "complete" ? (issueType === "bug" ? "No open Issues have the canonical bug label." : "Every connected repository was checked successfully.") : "No verified open Issues are available."}
         />
       )}
+      <IssuePagination
+        pagination={{ ...summary.pagination, items: issues }}
+        hrefFor={(cursor) =>
+          projectIssuesHref(project.slug, { type: issueType, cursor })
+        }
+      />
     </WorkspaceSection>
   );
 }

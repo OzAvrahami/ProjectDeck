@@ -14,7 +14,6 @@ const project = { id: "project-1", slug: "project-1" };
 
 describe("Project Workspace observation selection", () => {
   it.each([
-    ["issues", ["issues"]],
     ["releases", ["releases"]],
     ["activity", ["activity"]],
   ])("requests only %s evidence for the %s tab", async (tab, features) => {
@@ -31,6 +30,35 @@ describe("Project Workspace observation selection", () => {
 
     expect(observeGitHub).toHaveBeenCalledOnce();
     expect(observeGitHub).toHaveBeenCalledWith([project], { features });
+    expect(observeAutomation).not.toHaveBeenCalled();
+  });
+
+  it("requests only a bounded Issue page for the Issues tab", async () => {
+    const observed = {
+      ...project,
+      githubSummary: { issues: { items: [], status: "complete" } },
+    };
+    const pagination = { pageSize: 25, items: [], status: "complete" };
+    const observeIssuesPage = vi.fn().mockResolvedValue({
+      projects: [observed],
+      pagination,
+    });
+    const observeGitHub = vi.fn();
+    const observeAutomation = vi.fn();
+
+    const result = await observeProjectWorkspaceSurface(project, "issues", {
+      observeGitHub,
+      observeAutomation,
+      observeIssuesPage,
+      issuePage: { type: "bug", cursor: "opaque" },
+    });
+
+    expect(result.githubSummary.issues.pagination).toBe(pagination);
+    expect(observeIssuesPage).toHaveBeenCalledWith([project], {
+      type: "bug",
+      cursor: "opaque",
+    });
+    expect(observeGitHub).not.toHaveBeenCalled();
     expect(observeAutomation).not.toHaveBeenCalled();
   });
 

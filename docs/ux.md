@@ -71,6 +71,8 @@ The workspace maintains a strong project identity and exposes local tabs:
 
 Saved Project identity and the tab structure render ahead of remote observations so provider latency does not hide navigation. Loading copy names the evidence still being checked and never displays placeholder status values. Overview then streams its complete automated orientation model, with the GitHub Development Standard panel resolving as secondary evidence. Issues, Releases, and Activity load only their respective provider evidence; Docs performs no provider observation. Automatic Phase and attention badges appear with the complete Overview evidence rather than being guessed on narrower tabs.
 
+The Issues tab and global Issues view show at most 25 Issues per page with URL-backed All/Bugs filters and opaque cursor navigation. Changing a filter returns to its first page; malformed cursors safely show the first page with an explanation. Repository-wide open and canonical-bug counts remain visible even though records are bounded. Multi-repository pages retain Component/repository scope and merge by latest provider update time. Partial reads keep `+` lower-bound semantics and pause pagination until the repository set can be observed completely.
+
 The Overview should feel like a project command center.
 
 The main content contains:

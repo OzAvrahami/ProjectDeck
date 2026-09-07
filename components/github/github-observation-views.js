@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { formatRelativeTime, normalizeProjectAccent } from "../../lib/projects/portfolio.js";
+import { IssuePagination } from "./issue-pagination.js";
 
 const FAILURE_REASON_LABELS = {
   missing_token: "GitHub is not configured",
@@ -93,7 +96,7 @@ function EmptyObservationState({ title, message }) {
   );
 }
 
-export function IssuesView({ issues, check }) {
+export function IssuesView({ issues, check, counts, pagination, issueType }) {
   let emptyState = null;
 
   if (issues.length === 0) {
@@ -128,12 +131,28 @@ export function IssuesView({ issues, check }) {
         check={check}
       />
       <ProviderNotice check={check} subject="Issues" />
+      <nav className="mb-4 flex flex-wrap gap-2" aria-label="Issue filters">
+        <Link
+          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${issueType === "all" ? "border-accent text-foreground" : "border-line text-subtle hover:border-accent"}`}
+          href="/issues"
+          aria-current={issueType === "all" ? "page" : undefined}
+        >
+          All open Issues{counts?.openLabel ? ` · ${counts.openLabel}` : ""}
+        </Link>
+        <Link
+          className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${issueType === "bug" ? "border-accent text-foreground" : "border-line text-subtle hover:border-accent"}`}
+          href="/issues?type=bug"
+          aria-current={issueType === "bug" ? "page" : undefined}
+        >
+          Bugs{counts?.bugLabel ? ` · ${counts.bugLabel}` : counts?.status === "complete" ? " · 0" : ""}
+        </Link>
+      </nav>
 
       {issues.length > 0 ? (
         <div className="border-b border-line">
           {issues.map((issue) => (
             <article className="border-t border-line py-4" key={issue.id}>
-              <div className="flex items-start justify-between gap-5">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:justify-between sm:gap-5">
                 <div className="min-w-0">
                   <ProjectScope item={issue} />
                   <a
@@ -158,6 +177,16 @@ export function IssuesView({ issues, check }) {
       ) : (
         <EmptyObservationState {...emptyState} />
       )}
+      <IssuePagination
+        pagination={{ ...pagination, items: issues }}
+        hrefFor={(cursor) => {
+          const params = new URLSearchParams();
+          if (issueType === "bug") params.set("type", "bug");
+          if (cursor) params.set("cursor", cursor);
+          const query = params.toString();
+          return query ? `/issues?${query}` : "/issues";
+        }}
+      />
     </section>
   );
 }

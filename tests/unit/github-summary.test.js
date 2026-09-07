@@ -194,6 +194,28 @@ describe("Project GitHub aggregation", () => {
     });
   });
 
+  it("uses provider totals independently of the visible bounded page", () => {
+    const summary = summarizeProjectGitHub(project(), [
+      observation({
+        issues: {
+          status: "success",
+          items: [issue(1), issue(2, { labels: ["bug"] })],
+          totalCount: 83,
+          bugCount: 7,
+          filteredTotalCount: 83,
+        },
+      }),
+    ]);
+
+    expect(summary.issues).toMatchObject({
+      openIssueCount: 83,
+      openBugCount: 7,
+      filteredIssueCount: 83,
+      label: "7 bugs · 83 open",
+    });
+    expect(summary.issues.items).toHaveLength(2);
+  });
+
   it("distinguishes a successful zero result from total provider failure", () => {
     const zero = summarizeProjectGitHub(project(), [observation()]);
     const unavailable = summarizeProjectGitHub(project(), [

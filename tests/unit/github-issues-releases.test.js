@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  fetchGitHubIssuePage,
   fetchOpenGitHubIssues,
   normalizeGitHubIssue,
 } from "../../lib/github/issues.js";
@@ -19,6 +20,50 @@ const repository = {
   fullName: "owner/project",
   url: "https://github.com/owner/project",
 };
+
+function issuePageResponse(
+  nodes = [],
+  { totalCount = nodes.length, bugCount = 0, hasNextPage = false } = {},
+) {
+  return new Response(
+    JSON.stringify({
+      data: {
+        repository: {
+          page: {
+            totalCount,
+            pageInfo: {
+              hasNextPage,
+              endCursor: nodes.length ? `cursor-${nodes.length}` : null,
+            },
+            edges: nodes.map((node, index) => ({
+              cursor: `cursor-${index + 1}`,
+              node: {
+                id: String(node.id),
+                number: node.number,
+                title: node.title,
+                url: node.html_url,
+                state: "OPEN",
+                createdAt: node.created_at,
+                updatedAt: node.updated_at,
+                labels: {
+                  nodes: (node.labels ?? []).map((label) => ({
+                    name: typeof label === "string" ? label : label.name,
+                  })),
+                },
+                assignees: {
+                  nodes: node.assignees ?? [],
+                },
+              },
+            })),
+          },
+          allOpen: { totalCount },
+          bugs: { totalCount: bugCount },
+        },
+      },
+    }),
+    { status: 200 },
+  );
+}
 
 describe("GitHub Resource identity", () => {
   it("derives owner and repository only from a canonical GitHub repository URL", () => {
@@ -44,9 +89,7 @@ describe("GitHub observation scope", () => {
   it("does not fetch Releases for an Issues-only page composition", async () => {
     const fetchImpl = vi
       .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify([]), { status: 200 }),
-      );
+      .mockResolvedValue(issuePageResponse());
     const [observed] = await observeProjectsGitHub(
       [
         {
@@ -121,18 +164,11 @@ describe("GitHub Issues", () => {
     });
   });
 
-  it("excludes Pull Requests and preserves a successful empty result", async () => {
+  it("uses the Issue-only GraphQL connection and preserves a successful empty result", async () => {
     const fetchImpl = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify([issue(), issue({ id: 11, pull_request: {} })]),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify([]), { status: 200 }),
-      );
+      .mockResolvedValueOnce(issuePageResponse([issue()], { bugCount: 1 }))
+      .mockResolvedValueOnce(issuePageResponse());
 
     await expect(
       fetchOpenGitHubIssues(repository, { token: "token", fetchImpl }),
@@ -142,33 +178,66 @@ describe("GitHub Issues", () => {
     ).resolves.toEqual([]);
   });
 
-  it("follows Issue pagination", async () => {
-    const firstPage = Array.from({ length: 100 }, (_, index) =>
+  it("returns one bounded page and a provider cursor without draining later pages", async () => {
+    const firstPage = Array.from({ length: 25 }, (_, index) =>
       issue({ id: index + 1, number: index + 1 }),
     );
     const fetchImpl = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(firstPage), {
-          status: 200,
-          headers: {
-            Link: '<https://api.github.com/repos/owner/project/issues?page=2>; rel="next"',
-          },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify([issue({ id: 101, number: 101 })]), {
-          status: 200,
-        }),
-      );
+      .mockResolvedValueOnce(issuePageResponse(firstPage, {
+        totalCount: 101,
+        bugCount: 7,
+        hasNextPage: true,
+      }));
 
-    const issues = await fetchOpenGitHubIssues(repository, {
+    const page = await fetchGitHubIssuePage(repository, {
       token: "token",
       fetchImpl,
     });
 
-    expect(issues).toHaveLength(101);
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(page.items).toHaveLength(25);
+    expect(page).toMatchObject({
+      totalCount: 101,
+      bugCount: 7,
+      filteredTotalCount: 101,
+      pageInfo: { hasNextPage: true },
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const request = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(request.variables).toMatchObject({ first: 25, after: null });
+    expect(request.query).toContain("page: issues(");
+  });
+
+  it("passes the next cursor and canonical bug filter to GitHub", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      issuePageResponse([issue()], { totalCount: 12, bugCount: 12 }),
+    );
+
+    await fetchGitHubIssuePage(repository, {
+      token: "token",
+      fetchImpl,
+      after: "provider-cursor",
+      type: "bug",
+    });
+
+    const request = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(request.variables).toMatchObject({
+      after: "provider-cursor",
+      filterBy: { labels: ["bug"] },
+    });
+  });
+
+  it("rejects an invalid provider page instead of treating it as final", async () => {
+    await expect(
+      fetchGitHubIssuePage(repository, {
+        token: "token",
+        fetchImpl: vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ data: { repository: { page: {} } } }), {
+            status: 200,
+          }),
+        ),
+      }),
+    ).rejects.toMatchObject({ code: "provider" });
   });
 
   it("distinguishes permission, rate-limit, and provider failures", async () => {
