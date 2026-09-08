@@ -23,7 +23,7 @@ Server-side integration and data layer
   `---> Monitored PostgreSQL services (read-only SELECT 1)
 ```
 
-There is no separate Express server, API service, worker deployment, or microservice boundary in the MVP.
+There is no separate Express server, API service or microservice boundary. Health alerts use a separate Railway Cron service running the same repository's one-shot worker against the same database; the scheduler owns recurrence.
 
 ## 2. Core Architecture Principles
 
@@ -194,7 +194,7 @@ Aggregation considers only enabled monitors marked `affects_project_health`. No 
 
 Attention synthesis is a pure, deterministic pass over that normalized Health result and the same GitHub Projects v2 read model already used by Automatic Next. It performs no provider requests. Required Down observations are critical; structured failed-latest-production and explicit reconnect/configuration failures are high. Canonical open `bug` Issues are critical at P0 and high at P1 only in Ready, In Progress, or Verify. Informational observations and ordinary transitional degradation are excluded. The strongest severity wins while all distinct provider, Resource, repository, and Component evidence remains attached. A stored `needs_attention=true` is a manual override; returning Edit Project to Automatic clears the stored flag and manual summary.
 
-MVP observations run at request time with small concurrency limits and provider-specific bounded timeouts. Railway discovery is connection-level rather than repeated per card; discovered metadata is stored locally, refreshed after authorization or on request, and deployment observations use a named 45-second in-process TTL. Service observations remain isolated, so one malformed service does not invalidate other Projects. This is appropriate for the current portfolio; measured latency or scale, not speculation, is the trigger for background observation later.
+MVP observations run at request time with small concurrency limits and provider-specific bounded timeouts. Railway discovery is connection-level rather than repeated per card; discovered metadata is stored locally, refreshed after authorization or on request, and deployment observations use a named 45-second in-process TTL. Service observations remain isolated, so one malformed service does not invalidate other Projects. These request-time observations remain unchanged. Proactive Health alerts additionally run the same Health observer from a scheduled one-shot command.
 
 ## 9. Failure and Freshness Behavior
 
@@ -234,10 +234,11 @@ Tests should emphasize product boundaries: Phase versus attention and runtime He
 The MVP deployment consists of:
 
 - one Railway service running the full Next.js application;
+- an optional separate Railway Cron service running the Health alert command from the same repository;
 - one Neon PostgreSQL database owned by ProjectDeck;
 - Railway-managed environment variables for the database connection and provider credentials.
 
-The Railway service handles page rendering, Server Actions, Route Handlers, database access, and synchronous provider requests. There is no separate API, worker, scheduler, Redis instance, or queue in the MVP.
+The Railway service handles page rendering, Server Actions, Route Handlers, database access, and synchronous provider requests. Health alerting adds a one-shot worker and a database delivery queue under Railway Cron. There is no separate API or Redis instance.
 
 ## 13. Explicit Non-Architecture
 
@@ -247,8 +248,8 @@ The following are deliberately not part of the MVP architecture:
 - separate API service;
 - microservices;
 - Redis;
-- job queue;
-- background worker architecture;
+- general-purpose queue infrastructure;
+- continuously running background workers;
 - event bus;
 - Kubernetes;
 - multi-tenant architecture;
@@ -291,3 +292,12 @@ None of these responses should be built before its trigger exists.
 | Background infrastructure | None in MVP |
 | Integration model | Modular in-process provider adapters, not plugins or microservices |
 | External project databases | Independent from and not used as ProjectDeck's own database |
+
+
+## Health incident alerting
+
+`lib/alerts/worker.js` exposes `checkAllProjectAlerts()` and `npm run alerts:check` runs it once without Next.js/browser requests. It loads local Health monitor/Component/association inputs and invokes the existing bounded Health observation architecture without fetching GitHub Issues, Releases, commits, workflow or attention. Notifications never determine Health.
+
+Alert persistence uses Drizzle with the existing `postgres` dependency over PostgreSQL TCP, because interactive row-lock transactions are required for atomic incident decisions; the existing Neon HTTP query boundaries remain intact elsewhere. A Project-row lock and partial active-incident unique index serialize transitions. A per-incident/event/channel constraint and committed delivery claim prevent concurrent duplicate sends. Resend uses durable provider idempotency within its documented retention window; ambiguous Twilio acceptance is retained for review without retry. The same database stores owner preferences, disabled-by-default Project opt-in, confirmation state, incidents and independent deliveries. Payloads are immutable after their first attempt and excluded from UI/history queries.
+
+Authenticated server actions save validated recipients and handle explicit TEST clicks. Credentials stay in server-only provider modules. The worker has no public scheduler endpoint, closes its pool, and emits aggregate diagnostics only. See [Health alerting](alerting.md) for exact transitions, retry/crash semantics, migration and Railway owner setup.

@@ -180,6 +180,12 @@ export default async function SettingsPage({ searchParams }) {
           connections are managed. Secret values never appear here.
         </p>
 
+        <section className="mt-10 rounded-2xl border border-line bg-surface p-6" aria-labelledby="notifications-heading">
+          <h2 id="notifications-heading" className="text-base font-semibold">Notifications</h2>
+          <p className="mt-2 text-sm text-subtle">Configure Email and SMS Health alerts, send a deliberate test, and review recent incidents.</p>
+          <Link href="/settings/notifications" className="mt-4 inline-block text-sm font-semibold underline">Manage Notifications →</Link>
+        </section>
+
         <section className="mt-10" aria-labelledby="integrations-heading">
           <h2
             className="font-mono text-xs uppercase tracking-[0.14em] text-muted"

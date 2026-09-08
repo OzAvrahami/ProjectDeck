@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added scheduled operational Health incident alerts with Email/SMS delivery, recovery and escalation notifications, durable duplicate suppression, owner settings, per-Project opt-in and delivery history.
+
 ## [0.2.0] - 2026-09-07
 
 ### Added

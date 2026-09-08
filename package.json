@@ -14,10 +14,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "alerts:check": "node --conditions=react-server scripts/check-alerts.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.1.0",
+    "@next/env": "16.3.3",
     "drizzle-orm": "0.45.2",
     "jose": "6.2.10",
     "next": "16.3.3",

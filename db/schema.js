@@ -1,6 +1,9 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -52,6 +55,7 @@ export const projects = pgTable(
     // reads synthesized phase and uses this nullable override only on request.
     phaseOverride: projectPhaseOverride("phase_override"),
     needsAttention: boolean("needs_attention").default(false).notNull(),
+    healthAlertsEnabled: boolean("health_alerts_enabled").default(false).notNull(),
     attentionSummary: text("attention_summary"),
     nextAction: text("next_action"),
     accent: varchar("accent", { length: 64 }).notNull(),
@@ -70,6 +74,68 @@ export const projects = pgTable(
     index("projects_last_worked_at_idx").on(table.lastWorkedAt),
   ],
 );
+
+export const notificationSettings = pgTable("notification_settings", {
+  id: integer("id").primaryKey().default(1),
+  alertsEnabled: boolean("alerts_enabled").default(false).notNull(),
+  emailEnabled: boolean("email_enabled").default(false).notNull(),
+  emailRecipient: varchar("email_recipient", { length: 254 }),
+  smsEnabled: boolean("sms_enabled").default(false).notNull(),
+  phoneNumber: varchar("phone_number", { length: 16 }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [check("notification_settings_single_owner", sql`${table.id} = 1`)]);
+
+export const healthAlertStates = pgTable("health_alert_states", {
+  alertingEnabled: boolean("alerting_enabled").default(false).notNull(),
+  projectId: uuid("project_id").primaryKey().references(() => projects.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 24 }).notNull(),
+  statusSince: timestamp("status_since", { withTimezone: true }).notNull(),
+  lastObservedAt: timestamp("last_observed_at", { withTimezone: true }).notNull(),
+});
+
+export const healthIncidents = pgTable("health_incidents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  openedAt: timestamp("opened_at", { withTimezone: true }).notNull(),
+  lastObservedAt: timestamp("last_observed_at", { withTimezone: true }).notNull(),
+  recoveredAt: timestamp("recovered_at", { withTimezone: true }),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  closureReason: varchar("closure_reason", { length: 40 }),
+  escalatedAt: timestamp("escalated_at", { withTimezone: true }),
+  initialStatus: varchar("initial_status", { length: 24 }).notNull(),
+  currentStatus: varchar("current_status", { length: 24 }).notNull(),
+  summary: jsonb("summary").notNull(),
+}, (table) => [
+  uniqueIndex("health_incidents_one_active_project").on(table.projectId).where(sql`${table.closedAt} is null`),
+  index("health_incidents_opened_idx").on(table.openedAt),
+]);
+
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  incidentId: uuid("incident_id").references(() => healthIncidents.id, { onDelete: "cascade" }),
+  channel: varchar("channel", { length: 8 }).notNull(),
+  notificationType: varchar("notification_type", { length: 32 }).notNull(),
+  testKey: uuid("test_key"),
+  status: varchar("status", { length: 24 }).default("pending").notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  attemptedAt: timestamp("attempted_at", { withTimezone: true }),
+  firstAttemptedAt: timestamp("first_attempted_at", { withTimezone: true }),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  providerMessageId: varchar("provider_message_id", { length: 100 }),
+  failureClassification: varchar("failure_classification", { length: 64 }),
+  // Immutable request snapshot for provider idempotency. Server-only; never
+  // select this column into the history/UI. Contains contact data, no tokens.
+  payload: jsonb("payload").notNull(),
+}, (table) => [
+  uniqueIndex("notification_delivery_event_channel").on(table.incidentId, table.channel, table.notificationType),
+  uniqueIndex("notification_delivery_test_key").on(table.testKey),
+  index("notification_delivery_pending_idx").on(table.status, table.nextAttemptAt),
+  check("notification_delivery_channel", sql`${table.channel} in ('email', 'sms')`),
+  check("notification_delivery_attempts", sql`${table.attempts} between 0 and 3`),
+  check("notification_delivery_event", sql`(${table.notificationType} = 'test' and ${table.incidentId} is null and ${table.testKey} is not null) or (${table.notificationType} in ('incident_opened', 'incident_escalated', 'incident_recovered') and ${table.incidentId} is not null and ${table.testKey} is null)`),
+]);
 
 export const components = pgTable(
   "components",

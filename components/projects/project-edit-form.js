@@ -59,6 +59,14 @@ export function ProjectEditForm({
       ) : null}
 
       <div className="space-y-8">
+        <fieldset className="space-y-3">
+          <legend className="font-mono text-xs uppercase tracking-[0.14em] text-muted">Health alerts</legend>
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" name="healthAlertsEnabled" defaultChecked={values.healthAlertsEnabled ?? false} />
+            Send Health alerts for this Project
+          </label>
+          <p className="text-xs leading-5 text-muted">Requires Alerts enabled in <Link href="/settings/notifications" className="underline">Notifications settings</Link>. Disabled by default. Only monitored operational Health can trigger an alert.</p>
+        </fieldset>
         <fieldset className="space-y-6">
           <legend className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
             Project details

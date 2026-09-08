@@ -171,3 +171,12 @@ Motion should clarify transitions and feedback, respect reduced-motion preferenc
 - No visual blurring of “needs attention,” automatic Next, a manual Next override, or a separate recommendation.
 - No recommendation styled as an already-made decision.
 - No unavailable integration promoted into a whole-page failure.
+
+
+## Notifications
+
+Settings links to **Notifications**, a focused owner-only surface for Alerts enabled, Send Email alerts and Email recipient, Send SMS alerts and an international E.164 Phone number. Global alerting, channels and the **Send Health alerts for this Project** toggle in Edit Project start disabled. Global enable and Project opt-in are both required.
+
+The page distinguishes disabled alerts, unconfigured providers, invalid ProjectDeck link configuration and delivery failures. Saving never sends a message. Separate explicit **Send test Email** and **Send test SMS** actions explain that they send real TEST messages to saved recipients even when automatic alerts are disabled; unavailable provider configuration disables the actions. Each action reports its result and records a separate test history item.
+
+Recent Health incidents show Project links, active/recovered/closed state, opened and recovered times, and per-channel/event delivery status and attempts. Provider acceptance is labeled honestly; it does not verify inbox or handset delivery. Ambiguous acceptance requires review. Removal of monitoring closes an incident without presenting a recovery. The table scrolls within its container on small screens; the settings form stays a simple single column. See [Health alerting](alerting.md) for deterministic confirmation windows and setup.

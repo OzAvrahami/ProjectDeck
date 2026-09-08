@@ -19,6 +19,7 @@ export async function updateProjectAction(_previousState, formData) {
 
   const slug = String(field(formData, "slug") ?? "").trim();
   const validation = validateProjectEdit({
+    healthAlertsEnabled: field(formData, "healthAlertsEnabled"),
     name: field(formData, "name"),
     tagline: field(formData, "tagline"),
     phaseOverride: field(formData, "phaseOverride"),

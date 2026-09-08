@@ -69,6 +69,10 @@ Workspace Overview presents the three concepts together with separate evidence a
 
 Deployment monitors retain their existing Health contribution rules. Health identifies its actual basis: HTTP checks, PostgreSQL checks, or provider deployment monitors. A result based only on deployment monitors explicitly says that no HTTP or database runtime check contributes. This preserves the monitoring contract without presenting provider success as direct endpoint verification. Release-to-deployment drift detection is a separate capability.
 
+### Proactive operational Health alerts
+
+The owner can opt into Email and SMS notifications for monitored Projects, including recovery and a single escalation to Down. Health remains the authority: Down alerts immediately, Degraded requires a later matching observation after five minutes, and Unknown after ten minutes. Durable incidents suppress repeat messages. Not monitored never opens an incident; Issues, Needs Attention, Phase, Releases and deployment drift do not trigger this rule. Global and per-Project alerts start disabled. A separately scheduled one-shot worker makes this useful without an open browser. See [Health alerting](alerting.md) for policy, delivery limitations and setup.
+
 ### Activity is not automatically progress
 
 ProjectDeck should favor meaningful outcomes—such as a release, resolved issue, decision, rollback, or learned constraint—over activity counts. Failure and rollback may still be important project history.
